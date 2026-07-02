@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartCare — Nurse Dashboard Enhancements</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f7f9fc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --primary:#0f4c81;--primary-light:#1a69b3;--primary-ghost:#e8f0fb;
+  --accent:#00a878;--accent-light:#e6f7f3;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --warn:#d97706;--warn-light:#fffbeb;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+  --sidebar-w:224px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+/* layout */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);background:var(--primary);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo h1{font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px}
+.sidebar-logo p{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-user{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.user-info p{font-size:12px;font-weight:500;color:#fff;line-height:1.3}
+.user-info span{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section{padding:14px 18px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;border-left:3px solid transparent;transition:all .15s}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-item.active{color:#fff;background:rgba(255,255,255,.13);border-left-color:var(--accent);font-weight:500}
+.nav-item i{width:16px;font-size:14px;text-align:center;flex-shrink:0;opacity:.8}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1)}
+.logout-btn{width:100%;padding:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;font-family:inherit}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.topbar h2{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.page{flex:1;overflow-y:auto;padding:20px}
+</style>
+<style>
+/* shared components */
+.dash-banner{display:flex;align-items:center;gap:16px;background:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap}.dash-banner__icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--accent-light);color:var(--accent)}
+.dash-banner__body{flex:1;min-width:0}
+.dash-banner__name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.dash-banner__meta{font-size:12px;color:var(--text3);margin-top:2px}
+.dash-banner__actions{display:flex;gap:8px;flex-wrap:wrap}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-card .value{font-size:26px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.5px}
+.stat-card .sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-card.accent{border-left:3px solid var(--accent)}
+.stat-card.primary{border-left:3px solid var(--primary)}
+.stat-card.warn{border-left:3px solid var(--warn)}
+.stat-card.danger{border-left:3px solid var(--danger)}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.card--danger-border{border-left:3px solid var(--danger)}
+.card--warn-border{border-left:3px solid var(--warn)}
+.card--accent-border{border-left:3px solid var(--accent)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:16px 18px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.mb-4{margin-bottom:16px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.patient-name{font-weight:500;color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-green{background:var(--accent-light);color:#065f46}
+.badge-blue{background:var(--primary-ghost);color:var(--primary)}
+.badge-warn{background:var(--warn-light);color:#92400e}
+.badge-red{background:var(--danger-light);color:var(--danger)}
+.badge-gray{background:#f1f5f9;color:var(--text3)}
+.tag{display:inline-block;background:var(--primary-ghost);color:var(--primary);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace}
+.btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-light)}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#00956a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}.btn-outline:hover{background:var(--surface2)}
+.btn-ghost{background:transparent;color:var(--primary);border:none;padding:6px 10px;font-size:12px}.btn-ghost:hover{background:var(--primary-ghost)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:5px 11px;font-size:12px}
+.notice{display:flex;align-items:center;gap:10px;background:var(--accent-light);border:1px solid #a7e8d8;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:20px;font-size:13px;color:#065f46}
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:12px;color:var(--text2);width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .5s ease}
+.bar-fill.accent{background:var(--accent)}
+.bar-val{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.sidebar{display:none}.stats-grid{grid-template-columns:1fr 1fr}.grid-2,.grid-3{grid-template-columns:1fr}.page{padding:14px}}
+/* login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f4c81 0%,#1a69b3 50%,#00a878 100%);padding:16px}
+.login-card{background:#fff;border-radius:16px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo h1{font-size:22px;font-weight:600;color:var(--primary);letter-spacing:-.3px}
+.login-logo p{font-size:12px;color:var(--text3);margin-top:2px}
+.login-logo .cross{font-size:36px;margin-bottom:8px}
+.demo-accounts{background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2)}
+.demo-accounts strong{display:block;margin-bottom:6px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.demo-row{display:flex;gap:8px;flex-wrap:wrap}
+.demo-chip{background:#fff;border:1px solid var(--border2);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s;font-size:11px}
+.demo-chip:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.l-err{color:var(--danger);font-size:12px;margin-top:8px;display:none}
+</style>
+<style>
+/* ── NURSE-SPECIFIC ENHANCEMENTS ── */
+
+/* Critical patients highlight */
+.critical-row{background:#fff5f5 !important}
+.critical-row td{border-bottom:1px solid #fecaca}
+.critical-row:hover td{background:#fef2f2 !important}
+.critical-label{display:inline-flex;align-items:center;gap:4px;background:var(--danger);color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* Census gauge */
+.census-wrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.census-gauge{flex:1;min-width:180px}
+.gauge-track{height:12px;background:var(--border);border-radius:6px;overflow:hidden;margin-bottom:6px}
+.gauge-fill{height:100%;border-radius:6px;transition:width .6s ease}
+.gauge-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
+.census-stats{display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.census-stat{text-align:center;background:var(--bg);border-radius:var(--radius-sm);padding:10px 18px;border:1px solid var(--border)}
+.census-stat .cv{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-.5px}
+.census-stat .cl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+
+/* Batch vitals triage mode */
+.triage-mode-bar{display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--primary);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;flex-wrap:wrap}
+.triage-mode-bar.active{display:flex}
+.tm-info{color:#fff}
+.tm-info h4{font-size:14px;font-weight:600}
+.tm-info p{font-size:12px;opacity:.75;margin-top:2px}
+.tm-actions{display:flex;gap:8px;flex-wrap:wrap}
+.progress-bar{height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;margin-top:6px;min-width:120px}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s ease}
+
+/* Vitals quick-entry strip */
+.vitals-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:14px 18px;border-top:1px solid var(--border)}
+.vs-field{display:flex;flex-direction:column;gap:4px}
+.vs-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3)}
+.vs-input{padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none;width:100%;transition:border-color .15s,box-shadow .15s}
+.vs-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,168,120,.1)}
+
+/* Shift handover summary */
+.handover-section{margin-bottom:16px}
+.handover-section h4{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.handover-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.handover-row:last-child{border-bottom:none}
+.handover-row .hr-label{color:var(--text2)}
+.handover-row .hr-val{font-weight:600;color:var(--text)}
+.handover-highlight{background:var(--accent-light);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.handover-highlight i{color:var(--accent);font-size:18px;flex-shrink:0}
+.handover-highlight .hh-text{font-size:13px;color:var(--text2)}
+.handover-highlight .hh-text strong{color:var(--text)}
+</style>
+<body>
+
+<!-- ═══════ LOGIN SCREEN ═══════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross"><i class="fa-solid fa-hospital" style="color:var(--primary)"></i></div>
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Republic of Zambia</p>
+    </div>
+    <div class="demo-accounts">
+      <strong>Quick login</strong>
+      <div class="demo-row">
+        <div class="demo-chip" onclick="fillLogin('nurse','nurse123')"><i class="fa-solid fa-user-nurse"></i> Nurse</div>
+        <div class="demo-chip" onclick="fillLogin('doctor','doctor123')"><i class="fa-solid fa-user-doctor"></i> Doctor</div>
+        <div class="demo-chip" onclick="fillLogin('doctor2','doctor123')"><i class="fa-solid fa-user-doctor"></i> Dr. Lungu</div>
+        <div class="demo-chip" onclick="fillLogin('admin','admin123')"><i class="fa-solid fa-shield-halved"></i> Admin</div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px"><i class="fas fa-user"></i> Username</label>
+      <input type="text" id="l-user" placeholder="Enter username" autocomplete="username"
+             style="width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px"><i class="fas fa-lock"></i> Password</label>
+      <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()"
+             style="width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div class="l-err" id="l-err"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;margin-top:8px" onclick="doLogin()">
+      <i class="fa-solid fa-sign-in-alt"></i> Sign In
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ APP SHELL ═══════ -->
+<div id="app-shell" style="display:none;height:100vh;flex-direction:row;overflow:hidden">
+<div style="display:flex;width:100%;height:100%;overflow:hidden">
+<div class="sidebar">
+    <div class="sidebar-logo">
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Zambia</p>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sb-avatar" style="background:rgba(255,255,255,.2)">?</div>
+      <div class="user-info"><p id="sb-name">Loading…</p><span id="sb-role">—</span></div>
+    </div>
+    <nav>
+      <div class="nav-section">Main</div>
+      <div class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      <div class="nav-item"><i class="fa-solid fa-users"></i> Patients</div>
+      <div class="nav-item"><i class="fa-solid fa-stethoscope"></i> Encounters</div>
+      <div class="nav-section">Tools</div>
+      <div class="nav-item"><i class="fa-solid fa-heart-pulse"></i> Vitals</div>
+      <div class="nav-item"><i class="fa-solid fa-chart-bar"></i> Reports</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
+    </div>
+  </div><!-- /sidebar -->
+
+  <div class="main">
+    <div class="topbar">
+      <h2><i class="fa-solid fa-user-nurse" style="color:var(--accent);margin-right:4px"></i> Nurse Dashboard</h2>
+      <div class="topbar-right">
+        <span id="tb-facility" style="font-size:12px;color:var(--text3)">Day shift</span>
+        <button class="btn btn-accent btn-sm" onclick="toggleTriageMode()">
+          <i class="fa-solid fa-bolt"></i> Triage Mode
+        </button>
+        <div class="user-avatar" id="tb-user-avatar" style="background:var(--accent-light);color:var(--accent);font-size:12px">?</div>
+      </div>
+    </div>
+
+    <div class="page">
+
+      <div class="notice">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>Prototype preview of <strong>Nurse Dashboard enhancements</strong> — Critical Patient Highlighting, Batch Triage Mode, Patient Census, and Shift Handover Summary. Data is illustrative.</span>
+      </div>
+
+      <!-- TRIAGE MODE BAR (activates on button click) -->
+      <div class="triage-mode-bar" id="triageBar">
+        <div class="tm-info">
+          <h4><i class="fa-solid fa-bolt"></i> Batch Triage Mode — Active</h4>
+          <p>Cycling through patients with pending vitals. Submit to advance to the next patient.</p>
+          <div class="progress-bar"><div class="progress-fill" id="triageProgress" style="width:33%"></div></div>
+        </div>
+        <div class="tm-actions">
+          <span style="color:rgba(255,255,255,.75);font-size:13px;align-self:center" id="triageCounter">Patient 1 of 3</span>
+          <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,.4);color:#fff;background:rgba(255,255,255,.1)" onclick="triageNext()">
+            <i class="fa-solid fa-forward-step"></i> Skip
+          </button>
+          <button class="btn btn-sm" style="background:#fff;color:var(--primary);font-weight:600" onclick="toggleTriageMode()">
+            <i class="fa-solid fa-xmark"></i> Exit Mode
+          </button>
+        </div>
+      </div>
+
+      <!-- BANNER -->
+      <div class="dash-banner">
+        <div class="dash-banner__icon"><i class="fa-solid fa-user-nurse"></i></div>
+        <div class="dash-banner__body">
+          <div class="dash-banner__name" id="banner-name">Loading…</div>
+          <div class="dash-banner__meta" id="banner-meta">—</div>
+        </div>
+        <div class="dash-banner__actions">
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-user-plus"></i> Register Patient</button>
+          <button class="btn btn-accent btn-sm"><i class="fa-solid fa-heart-pulse"></i> Record Vitals</button>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="label"><i class="fa-solid fa-users fa-fw"></i> Facility Patients</div>
+          <div class="value" id="stat-patients">—</div>
+          <div class="sub" id="sub-patients">+— this week</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="label"><i class="fa-solid fa-stethoscope fa-fw"></i> Encounters Today</div>
+          <div class="value" id="stat-encounters">—</div>
+          <div class="sub" id="sub-encounters">— new registrations</div>
+        </div>
+        <div class="stat-card warn">
+          <div class="label"><i class="fa-solid fa-heart-pulse fa-fw"></i> Vitals Pending</div>
+          <div class="value" id="stat-vitals">—</div>
+          <div class="sub">Patients not yet triaged</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="label"><i class="fa-solid fa-triangle-exclamation fa-fw"></i> Allergy Alerts</div>
+          <div class="value" id="stat-allergies">—</div>
+          <div class="sub">Known allergies on file</div>
+        </div>
+      </div>
+
+      <!-- CRITICAL PATIENTS + CENSUS -->
+      <div class="grid-2 mb-4">
+
+        <!-- CRITICAL PATIENTS HIGHLIGHT -->
+        <div class="card card--danger-border">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-circle-radiation fa-fw" style="color:var(--danger)"></i> Critical Patients — Needs Attention</h3>
+            <span class="badge badge-red" style="animation:pulse 2s infinite">2 critical</span>
+          </div>
+          <div style="padding:10px 14px;background:var(--danger-light);font-size:12px;color:var(--danger);display:flex;align-items:center;gap:8px;border-bottom:1px solid #fecaca">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            Patients with <strong>pending vitals AND known allergies</strong> — highest priority for triage.
+          </div>
+          <div class="table-wrap"><table>
+            <thead>
+              <tr><th>Patient</th><th>Status</th><th>Allergy</th><th>In Queue Since</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr class="critical-row">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:30px;height:30px;font-size:11px;background:#fecaca;color:var(--danger)">MB</div>
+                    <div>
+                      <div class="patient-name">Mary Banda</div>
+                      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00142</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="critical-label"><i class="fa-solid fa-triangle-exclamation"></i> Critical</span></td>
+                <td><span class="badge badge-red"><i class="fa-solid fa-triangle-exclamation"></i> Penicillin</span></td>
+                <td style="font-size:12px;color:var(--danger)">47 min ago</td>
+                <td>
+                  <button class="btn btn-danger btn-sm" onclick="openVitalsPanel('Mary Banda', 0)">
+                    <i class="fa-solid fa-heart-pulse"></i> Triage Now
+                  </button>
+                </td>
+              </tr>
+              <tr class="critical-row">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:30px;height:30px;font-size:11px;background:#fecaca;color:var(--danger)">EZ</div>
+                    <div>
+                      <div class="patient-name">Esther Zulu</div>
+                      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00089</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="critical-label"><i class="fa-solid fa-triangle-exclamation"></i> Critical</span></td>
+                <td><span class="badge badge-red"><i class="fa-solid fa-triangle-exclamation"></i> Sulfa drugs</span></td>
+                <td style="font-size:12px;color:var(--danger)">1 hr 12 min ago</td>
+                <td>
+                  <button class="btn btn-danger btn-sm" onclick="openVitalsPanel('Esther Zulu', 1)">
+                    <i class="fa-solid fa-heart-pulse"></i> Triage Now
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:30px;height:30px;font-size:11px;background:var(--warn-light);color:var(--warn)">PN</div>
+                    <div>
+                      <div class="patient-name">Peter Nkonde</div>
+                      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00421</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-warn"><i class="fa-solid fa-clock"></i> Pending</span></td>
+                <td><span class="badge badge-gray">None</span></td>
+                <td style="font-size:12px;color:var(--text3)">22 min ago</td>
+                <td>
+                  <button class="btn btn-outline btn-sm" onclick="openVitalsPanel('Peter Nkonde', 2)">
+                    <i class="fa-solid fa-heart-pulse"></i> Triage
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table></div>
+        </div>
+
+        <!-- PATIENT CENSUS -->
+        <div class="card card--accent-border">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-hospital-user fa-fw" style="color:var(--accent)"></i> Patient Census — Today</h3>
+            <span class="badge badge-green">Live</span>
+          </div>
+          <div class="card-body">
+            <div class="census-wrap">
+              <div class="census-gauge">
+                <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:500">
+                  OPD Occupancy
+                </div>
+                <div class="gauge-track">
+                  <div class="gauge-fill" style="width:71%;background:var(--accent)"></div>
+                </div>
+                <div class="gauge-label"><span>0</span><span style="color:var(--text2);font-weight:500">24 / 34 capacity</span><span>34</span></div>
+
+                <div style="font-size:12px;color:var(--text2);margin:16px 0 8px;font-weight:500">
+                  Inpatient Beds
+                </div>
+                <div class="gauge-track">
+                  <div class="gauge-fill" style="width:88%;background:var(--warn)"></div>
+                </div>
+                <div class="gauge-label"><span>0</span><span style="color:var(--warn);font-weight:500">44 / 50 beds</span><span>50</span></div>
+
+                <div style="font-size:12px;color:var(--text2);margin:16px 0 8px;font-weight:500">
+                  ANC Clinic
+                </div>
+                <div class="gauge-track">
+                  <div class="gauge-fill" style="width:55%;background:var(--primary)"></div>
+                </div>
+                <div class="gauge-label"><span>0</span><span style="color:var(--primary);font-weight:500">11 / 20 slots</span><span>20</span></div>
+              </div>
+              <div class="census-stats">
+                <div class="census-stat">
+                  <div class="cv">24</div>
+                  <div class="cl">Today</div>
+                </div>
+                <div class="census-stat">
+                  <div class="cv" style="color:var(--text3)">19</div>
+                  <div class="cl">Avg/day</div>
+                </div>
+                <div class="census-stat" style="border-color:var(--warn);background:var(--warn-light)">
+                  <div class="cv" style="color:var(--warn)">+26%</div>
+                  <div class="cl" style="color:#92400e">vs avg</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BATCH VITALS INLINE PANEL (appears on triage now) -->
+      <div class="card mb-4" id="vitalsPanel" style="display:none;border:2px solid var(--accent)">
+        <div class="card-header" style="background:var(--accent-light)">
+          <div>
+            <h3 style="color:var(--accent)"><i class="fa-solid fa-heart-pulse fa-fw"></i> Quick Vitals — <span id="vp-name"></span></h3>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px" id="vp-sub"></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="closeVitalsPanel()"><i class="fa-solid fa-xmark"></i> Close</button>
+        </div>
+        <div class="vitals-strip">
+          <div class="vs-field">
+            <div class="vs-label"><i class="fa-solid fa-thermometer-half" style="color:var(--danger)"></i> Temp °C</div>
+            <input class="vs-input" id="vp-temp" type="number" step="0.1" placeholder="37.0" inputmode="decimal">
+          </div>
+          <div class="vs-field">
+            <div class="vs-label"><i class="fa-solid fa-heart" style="color:var(--danger)"></i> Pulse bpm</div>
+            <input class="vs-input" id="vp-pulse" type="number" placeholder="80" inputmode="numeric">
+          </div>
+          <div class="vs-field">
+            <div class="vs-label"><i class="fa-solid fa-gauge" style="color:var(--primary)"></i> Blood Press.</div>
+            <input class="vs-input" id="vp-bp" placeholder="120/80">
+          </div>
+          <div class="vs-field">
+            <div class="vs-label"><i class="fa-solid fa-weight-scale" style="color:var(--accent)"></i> Weight kg</div>
+            <input class="vs-input" id="vp-weight" type="number" step="0.1" placeholder="65" inputmode="decimal">
+          </div>
+          <div class="vs-field">
+            <div class="vs-label"><i class="fa-solid fa-ruler-vertical" style="color:var(--accent)"></i> Height cm</div>
+            <input class="vs-input" id="vp-height" type="number" placeholder="165" inputmode="numeric">
+          </div>
+          <div class="vs-field">
+            <div class="vs-label"><i class="fa-solid fa-lungs" style="color:var(--primary)"></i> SpO₂ %</div>
+            <input class="vs-input" id="vp-spo2" type="number" placeholder="98" inputmode="numeric">
+          </div>
+        </div>
+        <div style="padding:12px 18px;display:flex;gap:10px;align-items:center;border-top:1px solid var(--border);flex-wrap:wrap">
+          <button class="btn btn-accent" onclick="saveVitalsAndNext()">
+            <i class="fa-solid fa-floppy-disk"></i> Save &amp; Next Patient
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="closeVitalsPanel()">Cancel</button>
+          <span style="font-size:12px;color:var(--text3);margin-left:auto" id="vp-queue-info"></span>
+        </div>
+      </div>
+
+      <!-- SHIFT HANDOVER SUMMARY -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-clipboard-list fa-fw" style="color:var(--primary)"></i> Shift Handover Summary</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-blue">Day shift · 07:00–15:00</span>
+            <button class="btn btn-outline btn-sm"><i class="fa-solid fa-print"></i> Print</button>
+            <button class="btn btn-primary btn-sm"><i class="fa-solid fa-share-nodes"></i> Hand Over</button>
+          </div>
+        </div>
+        <div class="grid-3" style="padding:16px 18px;gap:16px">
+
+          <!-- Encounters -->
+          <div>
+            <div class="handover-section">
+              <h4><i class="fa-solid fa-stethoscope fa-fw"></i> Encounters</h4>
+              <div class="handover-row"><span class="hr-label">Total seen today</span><span class="hr-val">24</span></div>
+              <div class="handover-row"><span class="hr-label">New registrations</span><span class="hr-val">3</span></div>
+              <div class="handover-row"><span class="hr-label">OPD visits</span><span class="hr-val">18</span></div>
+              <div class="handover-row"><span class="hr-label">ANC visits</span><span class="hr-val">4</span></div>
+              <div class="handover-row"><span class="hr-label">Inpatient rounds</span><span class="hr-val">2</span></div>
+            </div>
+          </div>
+
+          <!-- Vitals -->
+          <div>
+            <div class="handover-section">
+              <h4><i class="fa-solid fa-heart-pulse fa-fw"></i> Vitals &amp; Triage</h4>
+              <div class="handover-row"><span class="hr-label">Vitals recorded</span><span class="hr-val">21</span></div>
+              <div class="handover-row"><span class="hr-label">Still pending</span><span class="hr-val" style="color:var(--warn)">3</span></div>
+              <div class="handover-row"><span class="hr-label">Critical flags raised</span><span class="hr-val" style="color:var(--danger)">2</span></div>
+              <div class="handover-row"><span class="hr-label">Allergy alerts</span><span class="hr-val" style="color:var(--warn)">3</span></div>
+              <div class="handover-row"><span class="hr-label">Avg triage wait</span><span class="hr-val">12 min</span></div>
+            </div>
+          </div>
+
+          <!-- Alerts & notes -->
+          <div>
+            <div class="handover-section">
+              <h4><i class="fa-solid fa-triangle-exclamation fa-fw"></i> Handover Alerts</h4>
+            </div>
+            <div class="handover-highlight">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <div class="hh-text"><strong>Mary Banda (SC-00142)</strong> — Vitals pending, Penicillin allergy. Needs immediate triage.</div>
+            </div>
+            <div class="handover-highlight">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <div class="hh-text"><strong>Esther Zulu (SC-00089)</strong> — Vitals pending 1h 12min, Sulfa allergy. Critical priority.</div>
+            </div>
+            <div style="padding:8px 10px;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;color:var(--text3)">
+              <i class="fa-solid fa-note-sticky"></i> Ward B bed 14 patient awaiting discharge paperwork.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /inner flex -->
+</div><!-- /app-shell -->
+
+<script>
+/* ── Auth ── */
+let token = localStorage.getItem('emr_token');
+let currentUser = JSON.parse(localStorage.getItem('emr_user') || 'null');
+
+function fillLogin(u, p) {
+  document.getElementById('l-user').value = u;
+  document.getElementById('l-pass').value = p;
+}
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const err = document.getElementById('l-err');
+  err.style.display = 'none';
+  try {
+    const res = await fetch('/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error || 'Invalid credentials'; err.style.display='block'; return; }
+    token = data.token; currentUser = data.user;
+    localStorage.setItem('emr_token', token);
+    localStorage.setItem('emr_user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) { err.textContent='Cannot reach server. Is the backend running?'; err.style.display='block'; }
+}
+function logout() {
+  token=null; currentUser=null;
+  localStorage.removeItem('emr_token'); localStorage.removeItem('emr_user');
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+async function api(path, opts={}) {
+  const res = await fetch(path, {
+    ...opts, headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`,...(opts.headers||{})}
+  });
+  if (res.status===401) { logout(); return null; }
+  return res.json();
+}
+async function showApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').style.display='flex';
+  if (currentUser) {
+    const ini = currentUser.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+    document.getElementById('sb-avatar').textContent = ini;
+    document.getElementById('sb-name').textContent = currentUser.name;
+    document.getElementById('sb-role').textContent = currentUser.role.toUpperCase();
+    document.getElementById('tb-user-avatar').textContent = ini;
+    document.getElementById('tb-facility').textContent = `Day shift · ${currentUser.facility}`;
+  }
+  const d = await api('/api/dashboard');
+  if (d) {
+    const s = d.stats || {};
+    document.getElementById('banner-name').textContent = d.nurse_name || currentUser.name;
+    document.getElementById('banner-meta').textContent = (d.facility||currentUser.facility) + ' · Nursing Station';
+    setVal('stat-patients',   s.total_patients   ?? '—');
+    setVal('stat-encounters', s.encounters_today ?? '—');
+    setVal('stat-vitals',     s.vitals_pending   ?? '—');
+    setVal('stat-allergies',  s.allergy_count    ?? '—');
+    setVal('sub-patients',    `+${s.registered_week??0} this week`);
+    setVal('sub-encounters',  `${s.registered_today??0} new registration${(s.registered_today??0)!==1?'s':''}`);
+  }
+}
+function setVal(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+if (token && currentUser) { showApp(); }
+
+/* ── Triage Mode ── */
+const TRIAGE_QUEUE = [
+  {name:'Mary Banda',   sid:'SC-00142', allergy:'Penicillin allergy', wait:'47 min'},
+  {name:'Esther Zulu',  sid:'SC-00089', allergy:'Sulfa allergy',      wait:'1h 12min'},
+  {name:'Peter Nkonde', sid:'SC-00421', allergy:null,                  wait:'22 min'},
+];
+let triageIdx = 0;
+let triageModeOn = false;
+
+function toggleTriageMode() {
+  triageModeOn = !triageModeOn;
+  triageIdx = 0;
+  const bar = document.getElementById('triageBar');
+  if (triageModeOn) {
+    bar.classList.add('active');
+    openVitalsPanel(TRIAGE_QUEUE[0].name, 0);
+  } else {
+    bar.classList.remove('active');
+    closeVitalsPanel();
+  }
+}
+
+function triageNext() {
+  triageIdx = Math.min(triageIdx + 1, TRIAGE_QUEUE.length - 1);
+  updateTriageBar();
+  const p = TRIAGE_QUEUE[triageIdx];
+  openVitalsPanel(p.name, triageIdx);
+}
+
+function updateTriageBar() {
+  const total = TRIAGE_QUEUE.length;
+  const pct = Math.round(((triageIdx + 1) / total) * 100);
+  document.getElementById('triageProgress').style.width = pct + '%';
+  document.getElementById('triageCounter').textContent = `Patient ${triageIdx+1} of ${total}`;
+}
+
+function openVitalsPanel(name, idx) {
+  const panel = document.getElementById('vitalsPanel');
+  document.getElementById('vp-name').textContent = name;
+  const p = TRIAGE_QUEUE[idx];
+  document.getElementById('vp-sub').textContent =
+    (p ? p.sid + ' · In queue ' + p.wait + (p.allergy ? ' · ⚠ ' + p.allergy : '') : '');
+  document.getElementById('vp-queue-info').textContent =
+    `${TRIAGE_QUEUE.length - idx - 1} more patient(s) pending after this`;
+  ['vp-temp','vp-pulse','vp-bp','vp-weight','vp-height','vp-spo2'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'center'});
+  updateTriageBar();
+}
+
+function closeVitalsPanel() {
+  document.getElementById('vitalsPanel').style.display = 'none';
+}
+
+function saveVitalsAndNext() {
+  const temp  = document.getElementById('vp-temp').value;
+  const pulse = document.getElementById('vp-pulse').value;
+  const bp    = document.getElementById('vp-bp').value;
+  if (!temp && !pulse && !bp) {
+    alert('Please enter at least one vital sign before saving.'); return;
+  }
+  const name = document.getElementById('vp-name').textContent;
+  triageIdx++;
+  if (triageIdx < TRIAGE_QUEUE.length) {
+    const next = TRIAGE_QUEUE[triageIdx];
+    openVitalsPanel(next.name, triageIdx);
+    // show brief confirmation
+    const info = document.getElementById('vp-queue-info');
+    info.textContent = `✓ Saved for ${name} — now on patient ${triageIdx+1} of ${TRIAGE_QUEUE.length}`;
+    info.style.color = 'var(--accent)';
+  } else {
+    closeVitalsPanel();
+    document.getElementById('triageBar').classList.remove('active');
+    triageModeOn = false;
+    alert('All pending patients triaged! Triage mode complete.');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartCare EMR — Zambia</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+/* ── reset & design tokens ── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f7f9fc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --primary:#0f4c81;--primary-light:#1a69b3;--primary-ghost:#e8f0fb;
+  --accent:#00a878;--accent-light:#e6f7f3;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --warn:#d97706;--warn-light:#fffbeb;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+  --sidebar-w:224px;
+}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%}
+</style>
+<style>
+/* ── login screen ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f4c81 0%,#1a69b3 50%,#00a878 100%);padding:16px}
+.login-card{background:white;border-radius:16px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo h1{font-size:22px;font-weight:600;color:var(--primary);letter-spacing:-.3px}
+.login-logo p{font-size:12px;color:var(--text3);margin-top:2px}
+.login-logo .cross{font-size:36px;margin-bottom:8px}
+.demo-accounts{background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2)}
+.demo-accounts strong{display:block;margin-bottom:6px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.demo-row{display:flex;gap:8px;flex-wrap:wrap}
+.demo-chip{background:white;border:1px solid var(--border2);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s;font-size:11px;touch-action:manipulation}
+.demo-chip:hover,.demo-chip:active{background:var(--primary);color:white;border-color:var(--primary)}
+/* ── app shell ── */
+#app{display:none;height:100vh;flex-direction:row;overflow:hidden}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99}
+.sidebar-overlay.open{display:block}
+/* ── sidebar ── */
+.sidebar{width:var(--sidebar-w);background:var(--primary);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;z-index:100;transition:transform .25s ease}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo h1{font-size:16px;font-weight:600;color:white;letter-spacing:-.2px}
+.sidebar-logo p{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-user{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:white;flex-shrink:0}
+.user-info p{font-size:12px;font-weight:500;color:white;line-height:1.3}
+.user-info span{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section{padding:14px 18px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;font-weight:400;transition:all .15s;border-left:3px solid transparent;touch-action:manipulation}
+.nav-item:hover,.nav-item:active{color:white;background:rgba(255,255,255,.07)}
+.nav-item.active{color:white;background:rgba(255,255,255,.13);border-left-color:var(--accent);font-weight:500}
+.nav-item i{width:16px;font-size:14px;text-align:center;flex-shrink:0;opacity:.8}
+.nav-item.active i{opacity:1}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1)}
+.logout-btn{width:100%;padding:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.logout-btn:hover{background:rgba(255,255,255,.15);color:white}
+</style>
+<style>
+/* ── main area ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.topbar-left{display:flex;align-items:center;gap:12px;min-width:0}
+.topbar h2{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--text);flex-shrink:0;touch-action:manipulation}
+.hamburger:hover{background:var(--bg)}
+.hamburger i{font-size:18px}
+.page{flex:1;overflow-y:auto;padding:20px}
+/* ── dashboard banner ── */
+.dash-banner{display:flex;align-items:center;gap:16px;background:white;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap}
+.dash-banner__icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.dash-banner--doctor .dash-banner__icon{background:var(--primary-ghost);color:var(--primary)}
+.dash-banner--nurse  .dash-banner__icon{background:var(--accent-light);color:var(--accent)}
+.dash-banner--admin  .dash-banner__icon{background:var(--warn-light);color:var(--warn)}
+.dash-banner__body{flex:1;min-width:0}
+.dash-banner__name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.dash-banner__meta{font-size:12px;color:var(--text3);margin-top:2px}
+.dash-banner__actions{display:flex;gap:8px;flex-wrap:wrap}
+/* ── stat cards ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:white;border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-card .value{font-size:26px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.5px}
+.stat-card .sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-card.accent{border-left:3px solid var(--accent)}
+.stat-card.primary{border-left:3px solid var(--primary)}
+.stat-card.warn{border-left:3px solid var(--warn)}
+.stat-card.danger{border-left:3px solid var(--danger)}
+/* ── cards ── */
+.card{background:white;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.card--danger-border{border-left:3px solid var(--danger)}
+.card--warn-border{border-left:3px solid var(--warn)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:16px 18px}
+/* ── grids ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+</style>
+<style>
+/* ── tables ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.patient-name{font-weight:500;color:var(--text)}
+/* ── badges ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-green{background:var(--accent-light);color:#065f46}
+.badge-blue{background:var(--primary-ghost);color:var(--primary)}
+.badge-warn{background:var(--warn-light);color:#92400e}
+.badge-red{background:var(--danger-light);color:var(--danger)}
+.badge-gray{background:#f1f5f9;color:var(--text3)}
+/* ── forms ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-grid.cols-1{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.span-2{grid-column:span 2}
+label{font-size:12px;font-weight:500;color:var(--text2);letter-spacing:.1px}
+input,select,textarea{padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);background:white;transition:border-color .15s,box-shadow .15s;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(26,105,179,.1)}
+textarea{resize:vertical;min-height:70px}
+.section-divider{grid-column:1/-1;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.section-divider h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+/* ── buttons ── */
+.btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;white-space:nowrap}
+.btn-primary{background:var(--primary);color:white}.btn-primary:hover{background:var(--primary-light)}
+.btn-accent{background:var(--accent);color:white}.btn-accent:hover{background:#00956a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}.btn-outline:hover{background:var(--surface2)}
+.btn-ghost{background:transparent;color:var(--primary);border:none;padding:6px 10px;font-size:12px}.btn-ghost:hover{background:var(--primary-ghost)}
+.btn-danger{background:var(--danger);color:white}
+.btn-sm{padding:5px 11px;font-size:12px}
+/* ── search bar ── */
+.search-bar{display:flex;align-items:center;gap:10px;background:white;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;flex:1;max-width:380px}
+.search-bar input{border:none;outline:none;font-size:13px;flex:1;background:transparent;color:var(--text);padding:0;box-shadow:none}
+.search-bar i{color:var(--text3);flex-shrink:0;font-size:13px}
+</style>
+<style>
+/* ── patient detail ── */
+.patient-header{display:flex;align-items:flex-start;gap:16px;padding:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.patient-avatar{width:52px;height:52px;border-radius:50%;background:var(--primary-ghost);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:var(--primary);flex-shrink:0}
+.patient-meta{flex:1;min-width:0}
+.patient-meta h2{font-size:18px;font-weight:600;letter-spacing:-.3px}
+.patient-meta .smart-id{font-family:'DM Mono',monospace;font-size:12px;color:var(--primary);background:var(--primary-ghost);padding:2px 8px;border-radius:4px;display:inline-block;margin:3px 0}
+.patient-actions{display:flex;gap:8px;flex-wrap:wrap}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+.info-item .key{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.info-item .val{font-size:13px;font-weight:500;color:var(--text)}
+/* ── vitals ── */
+.vitals-row{display:flex;gap:10px;flex-wrap:wrap;padding:14px 18px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.vital{background:white;border-radius:8px;padding:10px 14px;border:1px solid var(--border);text-align:center;min-width:76px}
+.vital .v-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.vital .v-val{font-size:16px;font-weight:600;color:var(--primary);margin-top:2px}
+.vital .v-unit{font-size:10px;color:var(--text3)}
+/* ── encounter cards ── */
+.enc-card{border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden}
+.enc-header{padding:12px 14px;background:var(--surface2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:8px}
+.enc-header-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0;flex-wrap:wrap}
+.enc-header-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.enc-body{padding:14px 16px;display:none}
+.enc-body.open{display:block}
+.enc-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.enc-detail .key{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.enc-detail .val{font-size:13px;color:var(--text2)}
+/* ── charts ── */
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:12px;color:var(--text2);width:110px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .5s ease}
+.bar-fill.accent{background:var(--accent)}
+.bar-val{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
+.trend-chart{display:flex;align-items:flex-end;gap:6px;height:60px;padding:0 4px}
+.trend-bar{flex:1;background:var(--primary);border-radius:3px 3px 0 0;opacity:.7;transition:opacity .15s;min-width:0;position:relative}
+.trend-bar:hover{opacity:1}
+.trend-bar .tip{position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:var(--text);color:white;font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.trend-bar:hover .tip{opacity:1}
+/* ── misc ── */
+.vitals-modal-note{font-size:13px;color:var(--text2);margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.empty-state{text-align:center;padding:36px;color:var(--text3)}
+.empty-state p{font-size:13px}
+.tag{display:inline-block;background:var(--primary-ghost);color:var(--primary);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace}
+.flex{display:flex;align-items:center}
+.gap-2{gap:8px}.gap-3{gap:12px}.mb-4{margin-bottom:16px}
+.text-sm{font-size:12px;color:var(--text3)}
+.loading{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+.section-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px}
+.page-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+/* ── toast ── */
+.toast{position:fixed;bottom:24px;right:16px;left:16px;max-width:360px;margin:0 auto;background:var(--text);color:white;padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;z-index:1000;transform:translateY(80px);opacity:0;transition:all .3s;box-shadow:var(--shadow-md)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--accent)}.toast.error{background:var(--danger)}
+/* ── modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:16px 16px 0 0;width:100%;max-width:700px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.2)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-header h3{font-size:16px;font-weight:600}
+.modal-body{padding:20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;flex-wrap:wrap}
+</style>
+<style>
+/* ════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════ */
+@media (max-width:900px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:1fr 1fr}
+  .info-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  .sidebar{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);box-shadow:4px 0 24px rgba(0,0,0,.2)}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:flex}
+  #topbar-facility,#topbar-date{display:none}
+  .page{padding:14px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .info-grid{grid-template-columns:1fr 1fr}
+  .enc-detail-grid{grid-template-columns:1fr}
+  .form-grid,.form-grid.cols-3{grid-template-columns:1fr}
+  .field.span-2{grid-column:span 1}
+  .search-bar{max-width:100%}
+  .patient-header{flex-direction:column}
+  .patient-actions{width:100%}
+  .patient-actions .btn{flex:1;justify-content:center}
+  .login-card{padding:28px 22px}
+  .modal{max-height:95vh}
+  .modal-footer{flex-direction:column}
+  .modal-footer .btn{width:100%;justify-content:center}
+  .topbar{padding:0 14px}
+  .toast{bottom:16px;right:12px;left:12px}
+  .dash-banner{flex-direction:column;align-items:flex-start}
+  .dash-banner__actions{width:100%}
+  .dash-banner__actions .btn{flex:1;justify-content:center}
+}
+@media (max-width:380px){
+  .stats-grid{grid-template-columns:1fr}
+}
+</style>
+<body>
+
+<!-- ═══════════════════════ LOGIN ═══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross"><i class="fa-solid fa-hospital" style="color:var(--primary)"></i></div>
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Republic of Zambia</p>
+    </div>
+    <div class="demo-accounts">
+      <strong>Quick login</strong>
+      <div class="demo-row">
+        <div class="demo-chip" onclick="fillLogin('doctor','doctor123')"><i class="fa-solid fa-user-doctor"></i>Doctor</div>
+        <div class="demo-chip" onclick="fillLogin('nurse','nurse123')"><i class="fa-solid fa-user-nurse"></i> Nurse</div>
+        <div class="demo-chip" onclick="fillLogin('admin','admin123')"><i class="fa-solid fa-shield-halved"></i> Admin</div>
+        <div class="demo-chip" onclick="fillLogin('doctor2','doctor123')"><i class="fa-solid fa-user-doctor"></i> Dr. Lungu</div>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label><i class="fas fa-user"></i> Username</label>
+      <input type="text" id="l-user" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="field" style="margin-bottom:20px">
+      <label><i class="fas fa-lock"></i> Password</label>
+      <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="doLogin()">
+      <i class="fa-solid fa-sign-in-alt"></i> Sign In
+    </button>
+    <p id="l-err" style="color:var(--danger);font-size:12px;margin-top:10px;text-align:center;display:none"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP SHELL ═══════════════════ -->
+<div id="app">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1><i class="fa-solid fa-hospital-user" style="margin-right:6px"></i>SmartCare</h1>
+      <p>EMR System · Zambia</p>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">U</div>
+      <div class="user-info">
+        <p id="sidebar-name">User</p>
+        <span id="sidebar-role">Role</span>
+      </div>
+    </div>
+    <nav id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+      </button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Toggle menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h2 id="page-title">Dashboard</h2>
+      </div>
+      <!-- Doctor: quick patient search -->
+      <div id="qs-wrap" style="display:none;position:relative;flex:1;max-width:340px;margin:0 12px">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none"></i>
+        <input id="qs-input" type="text" placeholder="Quick patient search…" autocomplete="off"
+          style="width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;outline:none"
+          oninput="handleQuickSearch(this.value)" onfocus="openQS()">
+        <div id="qs-results" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:white;border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-md);z-index:100;max-height:320px;overflow-y:auto"></div>
+      </div>
+      <!-- Nurse: triage mode button -->
+      <div id="triage-btn-wrap" style="display:none">
+        <button class="btn btn-accent btn-sm" onclick="toggleTriageMode()">
+          <i class="fa-solid fa-bolt"></i> Triage Mode
+        </button>
+      </div>
+      <div class="topbar-right">
+        <span class="text-sm" id="topbar-facility"></span>
+        <span id="topbar-date" class="text-sm"></span>
+      </div>
+    </div>
+    <div class="page" id="page-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ MODAL ═══════════════════════ -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Modal</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()" style="padding:4px 8px;font-size:16px">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/static/js/role-dashboards.js"></script>
+<script src="/static/js/pages.js"></script>
+<script>
+/* ── state ── */
+const API = '';
+let token = localStorage.getItem('emr_token');
+let currentUser = JSON.parse(localStorage.getItem('emr_user') || 'null');
+let currentPage = 'dashboard';
+
+/* ── role-aware sidebar nav ── */
+const ROLE_NAV = {
+  doctor: `
+    <div class="nav-section">Clinical</div>
+    <div class="nav-item" data-page="dashboard" onclick="navigate('dashboard')"><i class="fa-solid fa-gauge-high fa-fw"></i> Dashboard</div>
+    <div class="nav-item" data-page="patients"  onclick="navigate('patients')"><i class="fa-solid fa-users fa-fw"></i> Patients</div>
+    <div class="nav-item" data-page="encounters" onclick="navigate('encounters')"><i class="fa-solid fa-stethoscope fa-fw"></i> Encounters</div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" data-page="reports" onclick="navigate('reports')"><i class="fa-solid fa-chart-bar fa-fw"></i> Reports</div>`,
+  nurse: `
+    <div class="nav-section">Nursing</div>
+    <div class="nav-item" data-page="dashboard" onclick="navigate('dashboard')"><i class="fa-solid fa-gauge-high fa-fw"></i> Dashboard</div>
+    <div class="nav-item" data-page="patients"  onclick="navigate('patients')"><i class="fa-solid fa-users fa-fw"></i> Patients</div>
+    <div class="nav-item" data-page="encounters" onclick="navigate('encounters')"><i class="fa-solid fa-stethoscope fa-fw"></i> Encounters</div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" data-page="reports" onclick="navigate('reports')"><i class="fa-solid fa-chart-bar fa-fw"></i> Reports</div>`,
+  admin: `
+    <div class="nav-section">Main</div>
+    <div class="nav-item" data-page="dashboard"  onclick="navigate('dashboard')"><i class="fa-solid fa-gauge-high fa-fw"></i> Dashboard</div>
+    <div class="nav-item" data-page="patients"   onclick="navigate('patients')"><i class="fa-solid fa-users fa-fw"></i> Patients</div>
+    <div class="nav-item" data-page="encounters" onclick="navigate('encounters')"><i class="fa-solid fa-stethoscope fa-fw"></i> Encounters</div>
+    <div class="nav-section">Administration</div>
+    <div class="nav-item" data-page="users"   onclick="navigate('users')"><i class="fa-solid fa-users-gear fa-fw"></i> Users</div>
+    <div class="nav-item" data-page="reports" onclick="navigate('reports')"><i class="fa-solid fa-chart-bar fa-fw"></i> Reports</div>`,
+};
+
+/* ── auth ── */
+function fillLogin(u, p) {
+  document.getElementById('l-user').value = u;
+  document.getElementById('l-pass').value = p;
+}
+
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const err = document.getElementById('l-err');
+  err.style.display = 'none';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error || 'Invalid credentials'; err.style.display = 'block'; return; }
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('emr_token', token);
+    localStorage.setItem('emr_user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) {
+    err.textContent = 'Cannot reach server. Is the backend running?';
+    err.style.display = 'block';
+  }
+}
+
+function logout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('emr_token');
+  localStorage.removeItem('emr_user');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(opts.headers || {}) }
+  });
+  if (res.status === 401) { logout(); return null; }
+  return res.json();
+}
+
+/* ── app shell ── */
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  const role = currentUser.role;
+  document.getElementById('sidebar-name').textContent = currentUser.name;
+  document.getElementById('sidebar-role').textContent = role.toUpperCase();
+  document.getElementById('sidebar-avatar').textContent = initials(currentUser.name);
+  document.getElementById('topbar-facility').textContent = currentUser.facility;
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-ZM', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+  });
+
+  document.getElementById('sidebar-nav').innerHTML = ROLE_NAV[role] || ROLE_NAV.admin;
+  document.getElementById('qs-wrap').style.display         = role === 'doctor' ? 'block'       : 'none';
+  document.getElementById('triage-btn-wrap').style.display = role === 'nurse'  ? 'inline-flex' : 'none';
+
+  navigate('dashboard');
+}
+
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('#sidebar-nav .nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  const titles = {
+    dashboard: 'Dashboard', patients: 'Patients',
+    encounters: 'Clinical Encounters', reports: 'Reports & Analytics', users: 'User Management',
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  document.getElementById('page-content').innerHTML = '<div class="loading">Loading…</div>';
+  pages_map[page]();
+}
+
+/* ── mobile sidebar ── */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+/* ── toast ── */
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ── modal ── */
+function openModal(title, body, footer = '') {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-footer').innerHTML = footer;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+/* ── helpers ── */
+function age(dob) { return Math.floor((Date.now() - new Date(dob).getTime()) / (1000*60*60*24*365.25)); }
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-ZM', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+function initials(name) { return (name || '').split(' ').map(w => w[0]).slice(0, 2).join(''); }
+function genderBadge(g) {
+  return g === 'Male' ? '<span class="badge badge-blue">Male</span>' : '<span class="badge badge-green">Female</span>';
+}
+function encTypeBadge(t) {
+  const m = { OPD:'badge-blue', 'ART Clinic':'badge-green', Inpatient:'badge-warn', MCH:'badge-green', 'TB Clinic':'badge-warn' };
+  return `<span class="badge ${m[t] || 'badge-gray'}">${t}</span>`;
+}
+function roleBadge(r) {
+  const m = { doctor:'badge-blue', nurse:'badge-green', admin:'badge-warn' };
+  return `<span class="badge ${m[r] || 'badge-gray'}">${r}</span>`;
+}
+function toggleEnc(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  body.classList.toggle('open');
+  if (chevron) chevron.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+
+/* ── dashboard router ── */
+async function renderDashboard() {
+  const d = await api('/api/dashboard');
+  if (!d) return;
+  if (d.role === 'doctor') return renderDoctorDashboard(d);
+  if (d.role === 'nurse')  return renderNurseDashboard(d);
+  return renderAdminDashboard(d);
+}
+
+/* ── page router ── */
+const pages_map = {
+  dashboard:  renderDashboard,
+  patients:   () => renderPatients(),
+  encounters: renderEncounters,
+  reports:    renderReports,
+  users:      renderUsers,
+};
+
+/* ── init ── */
+if (token && currentUser) {
+  showApp();
+} else {
+  document.getElementById('login-screen').style.display = 'flex';
+}
+</script>
+</body>
+</html>

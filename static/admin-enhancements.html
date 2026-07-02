@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartCare — Admin Dashboard Enhancements</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f7f9fc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --primary:#0f4c81;--primary-light:#1a69b3;--primary-ghost:#e8f0fb;
+  --accent:#00a878;--accent-light:#e6f7f3;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --warn:#d97706;--warn-light:#fffbeb;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+  --sidebar-w:224px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);background:var(--primary);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo h1{font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px}
+.sidebar-logo p{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-user{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.user-info p{font-size:12px;font-weight:500;color:#fff;line-height:1.3}
+.user-info span{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section{padding:14px 18px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;border-left:3px solid transparent;transition:all .15s}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-item.active{color:#fff;background:rgba(255,255,255,.13);border-left-color:var(--accent);font-weight:500}
+.nav-item i{width:16px;font-size:14px;text-align:center;flex-shrink:0;opacity:.8}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1)}
+.logout-btn{width:100%;padding:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;font-family:inherit}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.topbar h2{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.page{flex:1;overflow-y:auto;padding:20px}
+</style>
+<style>
+/* shared components */
+.dash-banner{display:flex;align-items:center;gap:16px;background:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap}
+.dash-banner__icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--warn-light);color:var(--warn)}
+.dash-banner__body{flex:1;min-width:0}
+.dash-banner__name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.dash-banner__meta{font-size:12px;color:var(--text3);margin-top:2px}
+.dash-banner__actions{display:flex;gap:8px;flex-wrap:wrap}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-card .value{font-size:26px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.5px}
+.stat-card .sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-card.accent{border-left:3px solid var(--accent)}
+.stat-card.primary{border-left:3px solid var(--primary)}
+.stat-card.warn{border-left:3px solid var(--warn)}
+.stat-card.danger{border-left:3px solid var(--danger)}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.card--danger-border{border-left:3px solid var(--danger)}
+.card--warn-border{border-left:3px solid var(--warn)}
+.card--accent-border{border-left:3px solid var(--accent)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:16px 18px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.mb-4{margin-bottom:16px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.patient-name{font-weight:500;color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-green{background:var(--accent-light);color:#065f46}
+.badge-blue{background:var(--primary-ghost);color:var(--primary)}
+.badge-warn{background:var(--warn-light);color:#92400e}
+.badge-red{background:var(--danger-light);color:var(--danger)}
+.badge-gray{background:#f1f5f9;color:var(--text3)}
+.tag{display:inline-block;background:var(--primary-ghost);color:var(--primary);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace}
+.btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-light)}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#00956a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}.btn-outline:hover{background:var(--surface2)}
+.btn-ghost{background:transparent;color:var(--primary);border:none;padding:6px 10px;font-size:12px}.btn-ghost:hover{background:var(--primary-ghost)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.notice{display:flex;align-items:center;gap:10px;background:var(--warn-light);border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:20px;font-size:13px;color:#92400e}
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:12px;color:var(--text2);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .5s ease}
+.bar-fill.accent{background:var(--accent)}
+.bar-fill.warn{background:var(--warn)}
+.bar-fill.danger{background:var(--danger)}
+.bar-val{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
+.empty-state{text-align:center;padding:36px;color:var(--text3);font-size:13px}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.sidebar{display:none}.stats-grid{grid-template-columns:1fr 1fr}.grid-2,.grid-3{grid-template-columns:1fr}.page{padding:14px}}
+/* login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f4c81 0%,#1a69b3 50%,#00a878 100%);padding:16px}
+.login-card{background:#fff;border-radius:16px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo h1{font-size:22px;font-weight:600;color:var(--primary);letter-spacing:-.3px}
+.login-logo p{font-size:12px;color:var(--text3);margin-top:2px}
+.login-logo .cross{font-size:36px;margin-bottom:8px}
+.demo-accounts{background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2)}
+.demo-accounts strong{display:block;margin-bottom:6px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.demo-row{display:flex;gap:8px;flex-wrap:wrap}
+.demo-chip{background:#fff;border:1px solid var(--border2);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s;font-size:11px}
+.demo-chip:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.l-err{color:var(--danger);font-size:12px;margin-top:8px;display:none}
+</style>
+<style>
+/* ── ADMIN-SPECIFIC ENHANCEMENTS ── */
+
+/* Facility health score card */
+.facility-card{background:#fff;border-radius:var(--radius-sm);border:1px solid var(--border);padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.facility-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.facility-card.selected{border-color:var(--primary);box-shadow:0 0 0 2px rgba(15,76,129,.2)}
+.facility-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
+.facility-card.health-good::after{background:var(--accent)}
+.facility-card.health-warn::after{background:var(--warn)}
+.facility-card.health-poor::after{background:var(--danger)}
+.fc-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.fc-score{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.fc-score-num{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.fc-score-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.fc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.fc-metric{font-size:11px;color:var(--text3)}
+.fc-metric strong{color:var(--text2);font-weight:600}
+.health-score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:4px}
+.score-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Facility drill-down filter bar */
+.filter-bar{display:flex;align-items:center;gap:10px;background:var(--primary-ghost);border:1px solid #b8d0f0;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;flex-wrap:wrap}
+.filter-bar span{font-size:13px;color:var(--primary);font-weight:500}
+.filter-bar .filter-label{font-size:12px;color:var(--text3)}
+
+/* Data quality */
+.dq-issue{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.dq-issue:last-child{border-bottom:none}
+.dq-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.dq-icon.high{background:var(--danger-light);color:var(--danger)}
+.dq-icon.med{background:var(--warn-light);color:var(--warn)}
+.dq-icon.low{background:var(--primary-ghost);color:var(--primary)}
+.dq-body{flex:1}
+.dq-title{font-size:13px;font-weight:500;color:var(--text)}
+.dq-desc{font-size:12px;color:var(--text3);margin-top:2px}
+.dq-count{font-size:20px;font-weight:700;color:var(--text);flex-shrink:0;text-align:right;min-width:40px}
+
+/* Audit log */
+.audit-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.audit-row:last-child{border-bottom:none}
+.audit-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.ai-create{background:var(--accent-light);color:var(--accent)}
+.ai-update{background:var(--primary-ghost);color:var(--primary)}
+.ai-login{background:#f3f0ff;color:#6d28d9}
+.ai-delete{background:var(--danger-light);color:var(--danger)}
+.audit-body{flex:1;min-width:0}
+.audit-text{font-size:13px;color:var(--text2);line-height:1.4}
+.audit-text strong{color:var(--text)}
+.audit-meta{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* User activity table */
+.activity-bar-inline{height:6px;border-radius:3px;background:var(--accent);display:inline-block;vertical-align:middle}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:4px;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.offline-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);display:inline-block;margin-right:4px}
+</style>
+<body>
+
+<!-- ═══════ LOGIN SCREEN ═══════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross"><i class="fa-solid fa-hospital" style="color:var(--primary)"></i></div>
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Republic of Zambia</p>
+    </div>
+    <div class="demo-accounts">
+      <strong>Quick login</strong>
+      <div class="demo-row">
+        <div class="demo-chip" onclick="fillLogin('admin','admin123')"><i class="fa-solid fa-shield-halved"></i> Admin</div>
+        <div class="demo-chip" onclick="fillLogin('doctor','doctor123')"><i class="fa-solid fa-user-doctor"></i> Doctor</div>
+        <div class="demo-chip" onclick="fillLogin('nurse','nurse123')"><i class="fa-solid fa-user-nurse"></i> Nurse</div>
+        <div class="demo-chip" onclick="fillLogin('doctor2','doctor123')"><i class="fa-solid fa-user-doctor"></i> Dr. Lungu</div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px"><i class="fas fa-user"></i> Username</label>
+      <input type="text" id="l-user" placeholder="Enter username" autocomplete="username"
+             style="width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px"><i class="fas fa-lock"></i> Password</label>
+      <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()"
+             style="width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div class="l-err" id="l-err"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;margin-top:8px" onclick="doLogin()">
+      <i class="fa-solid fa-sign-in-alt"></i> Sign In
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ APP SHELL ═══════ -->
+<div id="app-shell" style="display:none;height:100vh;flex-direction:row;overflow:hidden">
+<div style="display:flex;width:100%;height:100%;overflow:hidden">
+<div class="sidebar">
+    <div class="sidebar-logo">
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Zambia</p>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sb-avatar" style="background:rgba(255,255,255,.2)">?</div>
+      <div class="user-info"><p id="sb-name">Loading…</p><span id="sb-role">—</span></div>
+    </div>
+    <nav>
+      <div class="nav-section">Main</div>
+      <div class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      <div class="nav-item"><i class="fa-solid fa-users"></i> Patients</div>
+      <div class="nav-item"><i class="fa-solid fa-stethoscope"></i> Encounters</div>
+      <div class="nav-section">Admin</div>
+      <div class="nav-item"><i class="fa-solid fa-users-gear"></i> Users</div>
+      <div class="nav-item"><i class="fa-solid fa-chart-bar"></i> Reports</div>
+      <div class="nav-item"><i class="fa-solid fa-shield-halved"></i> Audit Log</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
+    </div>
+  </div><!-- /sidebar -->
+
+  <div class="main">
+    <div class="topbar">
+      <h2><i class="fa-solid fa-shield-halved" style="color:var(--warn);margin-right:4px"></i> Admin Dashboard</h2>
+      <div class="topbar-right">
+        <span id="facilityFilter" style="display:none" class="badge badge-blue">
+          <i class="fa-solid fa-filter"></i> <span id="filterName"></span>
+          <button onclick="clearFilter()" style="background:none;border:none;cursor:pointer;color:var(--primary);padding:0 0 0 4px;font-size:12px">✕</button>
+        </span>
+        <span id="tb-facility" style="font-size:12px;color:var(--text3)">Ministry of Health · Zambia</span>
+        <div class="user-avatar" id="tb-user-avatar" style="background:var(--warn-light);color:var(--warn);font-size:12px">?</div>
+      </div>
+    </div>
+
+    <div class="page">
+
+      <div class="notice">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>Prototype of <strong>Admin Dashboard enhancements</strong> — Facility Health Scores with drill-down filter, User Activity Tracking, Data Quality Indicators, and Audit Log. Data is illustrative.</span>
+      </div>
+
+      <!-- FACILITY FILTER BAR (shown when a facility is selected) -->
+      <div class="filter-bar" id="filterBar" style="display:none">
+        <i class="fa-solid fa-filter" style="color:var(--primary)"></i>
+        <span>Filtered by facility: <strong id="filterBarName"></strong></span>
+        <span class="filter-label">— all sections below show data for this facility only</span>
+        <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="clearFilter()">
+          <i class="fa-solid fa-xmark"></i> Clear filter
+        </button>
+      </div>
+
+      <!-- BANNER -->
+      <div class="dash-banner">
+        <div class="dash-banner__icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="dash-banner__body">
+          <div class="dash-banner__name">System Administration</div>
+          <div class="dash-banner__meta">Ministry of Health · Republic of Zambia — Full access</div>
+        </div>
+        <div class="dash-banner__actions">
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-users-gear"></i> Manage Users</button>
+          <button class="btn btn-outline btn-sm"><i class="fa-solid fa-chart-bar"></i> Reports</button>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="label"><i class="fa-solid fa-users fa-fw"></i> Total Patients</div>
+          <div class="value" id="stat-patients">—</div>
+          <div class="sub" id="sub-patients">+— this week</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="label"><i class="fa-solid fa-stethoscope fa-fw"></i> Total Encounters</div>
+          <div class="value" id="stat-encounters">—</div>
+          <div class="sub">All clinical visits</div>
+        </div>
+        <div class="stat-card warn">
+          <div class="label"><i class="fa-solid fa-calendar-days fa-fw"></i> This Month</div>
+          <div class="value" id="stat-monthly">—</div>
+          <div class="sub">Encounters recorded</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="label"><i class="fa-solid fa-clock fa-fw"></i> Today</div>
+          <div class="value" id="stat-today">—</div>
+          <div class="sub" id="sub-users">— active system users</div>
+        </div>
+      </div>
+
+      <!-- ROW 1: FACILITY HEALTH SCORES -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-hospital-user fa-fw" style="color:var(--primary)"></i> Facility Health Scores</h3>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;gap:10px;font-size:11px;color:var(--text3)">
+              <span><span class="score-dot" style="background:var(--accent);display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px"></span>Good ≥75</span>
+              <span><span class="score-dot" style="background:var(--warn);display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px"></span>Fair 50–74</span>
+              <span><span class="score-dot" style="background:var(--danger);display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px"></span>Poor &lt;50</span>
+            </div>
+            <span class="badge badge-gray">Click a facility to filter dashboard</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="health-score-grid" id="facilityGrid">
+            <!-- UTH -->
+            <div class="facility-card health-good" onclick="filterFacility('University Teaching Hospital')">
+              <div class="fc-name"><i class="fa-solid fa-hospital"></i> University Teaching Hosp.</div>
+              <div class="fc-score"><span class="fc-score-num" style="color:var(--accent)">88</span><span class="fc-score-label">/ 100 score</span></div>
+              <div class="fc-metrics">
+                <div class="fc-metric">Patients: <strong>1,204</strong></div>
+                <div class="fc-metric">Encounters: <strong>3,812</strong></div>
+                <div class="fc-metric">Data quality: <strong style="color:var(--accent)">94%</strong></div>
+                <div class="fc-metric">Overdue: <strong style="color:var(--accent)">3</strong></div>
+              </div>
+            </div>
+            <!-- Kitwe -->
+            <div class="facility-card health-warn" onclick="filterFacility('Kitwe Central Hospital')">
+              <div class="fc-name"><i class="fa-solid fa-hospital"></i> Kitwe Central Hospital</div>
+              <div class="fc-score"><span class="fc-score-num" style="color:var(--warn)">61</span><span class="fc-score-label">/ 100 score</span></div>
+              <div class="fc-metrics">
+                <div class="fc-metric">Patients: <strong>892</strong></div>
+                <div class="fc-metric">Encounters: <strong>2,107</strong></div>
+                <div class="fc-metric">Data quality: <strong style="color:var(--warn)">71%</strong></div>
+                <div class="fc-metric">Overdue: <strong style="color:var(--warn)">18</strong></div>
+              </div>
+            </div>
+            <!-- Ndola -->
+            <div class="facility-card health-poor" onclick="filterFacility('Ndola General Hospital')">
+              <div class="fc-name"><i class="fa-solid fa-hospital"></i> Ndola General Hospital</div>
+              <div class="fc-score"><span class="fc-score-num" style="color:var(--danger)">42</span><span class="fc-score-label">/ 100 score</span></div>
+              <div class="fc-metrics">
+                <div class="fc-metric">Patients: <strong>412</strong></div>
+                <div class="fc-metric">Encounters: <strong>988</strong></div>
+                <div class="fc-metric">Data quality: <strong style="color:var(--danger)">48%</strong></div>
+                <div class="fc-metric">Overdue: <strong style="color:var(--danger)">34</strong></div>
+              </div>
+            </div>
+            <!-- Livingstone -->
+            <div class="facility-card health-good" onclick="filterFacility('Livingstone General Hosp.')">
+              <div class="fc-name"><i class="fa-solid fa-hospital"></i> Livingstone General</div>
+              <div class="fc-score"><span class="fc-score-num" style="color:var(--accent)">79</span><span class="fc-score-label">/ 100 score</span></div>
+              <div class="fc-metrics">
+                <div class="fc-metric">Patients: <strong>221</strong></div>
+                <div class="fc-metric">Encounters: <strong>1,604</strong></div>
+                <div class="fc-metric">Data quality: <strong style="color:var(--accent)">88%</strong></div>
+                <div class="fc-metric">Overdue: <strong style="color:var(--accent)">6</strong></div>
+              </div>
+            </div>
+            <!-- Chipata -->
+            <div class="facility-card health-warn" onclick="filterFacility('Chipata General Hospital')">
+              <div class="fc-name"><i class="fa-solid fa-hospital"></i> Chipata General</div>
+              <div class="fc-score"><span class="fc-score-num" style="color:var(--warn)">55</span><span class="fc-score-label">/ 100 score</span></div>
+              <div class="fc-metrics">
+                <div class="fc-metric">Patients: <strong>68</strong></div>
+                <div class="fc-metric">Encounters: <strong>421</strong></div>
+                <div class="fc-metric">Data quality: <strong style="color:var(--warn)">62%</strong></div>
+                <div class="fc-metric">Overdue: <strong style="color:var(--warn)">11</strong></div>
+              </div>
+            </div>
+            <!-- Mansa -->
+            <div class="facility-card health-poor" onclick="filterFacility('Mansa General Hospital')">
+              <div class="fc-name"><i class="fa-solid fa-hospital"></i> Mansa General</div>
+              <div class="fc-score"><span class="fc-score-num" style="color:var(--danger)">38</span><span class="fc-score-label">/ 100 score</span></div>
+              <div class="fc-metrics">
+                <div class="fc-metric">Patients: <strong>44</strong></div>
+                <div class="fc-metric">Encounters: <strong>172</strong></div>
+                <div class="fc-metric">Data quality: <strong style="color:var(--danger)">41%</strong></div>
+                <div class="fc-metric">Overdue: <strong style="color:var(--danger)">27</strong></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text3)">
+            <i class="fa-solid fa-circle-info"></i> Score is composite of: data completeness (40%), encounter cadence (30%), overdue follow-up rate (20%), vitals completion (10%).
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2: USER ACTIVITY + DATA QUALITY -->
+      <div class="grid-2 mb-4">
+
+        <!-- USER ACTIVITY -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-users-gear fa-fw" style="color:var(--primary)"></i> User Activity Tracking</h3>
+            <div style="display:flex;gap:8px">
+              <span class="badge badge-green"><span class="online-dot"></span>6 online now</span>
+              <span class="badge badge-gray">18 total users</span>
+            </div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Facility</th>
+                <th>Last Login</th>
+                <th>Encounters</th>
+                <th>Activity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">CM</div>
+                    <div>
+                      <div class="patient-name">Dr. C. Mwale</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-blue">Doctor</span></td>
+                <td style="font-size:12px">UTH Lusaka</td>
+                <td><span class="online-dot"></span><span style="font-size:12px">Active now</span></td>
+                <td><strong>412</strong> <span style="font-size:11px;color:var(--text3)">total</span></td>
+                <td><div class="activity-bar-inline" style="width:90px"></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">EL</div>
+                    <div><div class="patient-name">Dr. E. Lungu</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-blue">Doctor</span></td>
+                <td style="font-size:12px">UTH Lusaka</td>
+                <td><span class="online-dot"></span><span style="font-size:12px">Active now</span></td>
+                <td><strong>287</strong> <span style="font-size:11px;color:var(--text3)">total</span></td>
+                <td><div class="activity-bar-inline" style="width:62px"></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--accent-light);color:var(--accent)">BM</div>
+                    <div><div class="patient-name">Nurse B. Mutale</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-green">Nurse</span></td>
+                <td style="font-size:12px">UTH Lusaka</td>
+                <td><span class="online-dot"></span><span style="font-size:12px">Active now</span></td>
+                <td><strong>891</strong> <span style="font-size:11px;color:var(--text3)">total</span></td>
+                <td><div class="activity-bar-inline" style="width:100px"></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">JB</div>
+                    <div><div class="patient-name">Dr. J. Banda</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-blue">Doctor</span></td>
+                <td style="font-size:12px">Kitwe Central</td>
+                <td><span class="offline-dot"></span><span style="font-size:12px;color:var(--text3)">2 hrs ago</span></td>
+                <td><strong>164</strong> <span style="font-size:11px;color:var(--text3)">total</span></td>
+                <td><div class="activity-bar-inline" style="width:36px;background:var(--border2)"></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--warn-light);color:var(--warn)">KM</div>
+                    <div><div class="patient-name">Dr. K. Mulenga</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-blue">Doctor</span></td>
+                <td style="font-size:12px">Ndola General</td>
+                <td><span class="offline-dot"></span><span style="font-size:12px;color:var(--warn)">3 days ago</span></td>
+                <td><strong>22</strong> <span style="font-size:11px;color:var(--text3)">total</span></td>
+                <td><div class="activity-bar-inline" style="width:8px;background:var(--warn)"></div></td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--danger-light);color:var(--danger)">TZ</div>
+                    <div><div class="patient-name">Nurse T. Zulu</div></div>
+                  </div>
+                </td>
+                <td><span class="badge badge-green">Nurse</span></td>
+                <td style="font-size:12px">Mansa General</td>
+                <td><span class="offline-dot"></span><span style="font-size:12px;color:var(--danger)">14 days ago</span></td>
+                <td><strong>4</strong> <span style="font-size:11px;color:var(--text3)">total</span></td>
+                <td><div class="activity-bar-inline" style="width:3px;background:var(--danger)"></div></td>
+              </tr>
+            </tbody>
+          </table></div>
+          <div style="padding:10px 14px;font-size:11px;color:var(--text3);border-top:1px solid var(--border)">
+            Activity bar = encounter volume relative to highest user. <span style="color:var(--danger)">Dr. K. Mulenga</span> and <span style="color:var(--danger)">Nurse T. Zulu</span> show low engagement — may warrant follow-up.
+          </div>
+        </div>
+
+        <!-- DATA QUALITY -->
+        <div class="card card--warn-border">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-circle-exclamation fa-fw" style="color:var(--warn)"></i> Data Quality Indicators</h3>
+            <span class="badge badge-warn">3 issues flagged</span>
+          </div>
+          <div class="card-body">
+            <div class="dq-issue">
+              <div class="dq-icon high"><i class="fa-solid fa-phone-slash"></i></div>
+              <div class="dq-body">
+                <div class="dq-title">Missing phone numbers</div>
+                <div class="dq-desc">Patients registered with no contact number on file — affects follow-up outreach.</div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:6px;padding:4px 0;font-size:11px">View patients →</button>
+              </div>
+              <div class="dq-count" style="color:var(--danger)">312</div>
+            </div>
+            <div class="dq-issue">
+              <div class="dq-icon med"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              <div class="dq-body">
+                <div class="dq-title">No encounters in 6+ months</div>
+                <div class="dq-desc">Active patients with no recorded visit in over 6 months — possible lost-to-follow-up.</div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:6px;padding:4px 0;font-size:11px">View patients →</button>
+              </div>
+              <div class="dq-count" style="color:var(--warn)">187</div>
+            </div>
+            <div class="dq-issue">
+              <div class="dq-icon med"><i class="fa-solid fa-heart-pulse"></i></div>
+              <div class="dq-body">
+                <div class="dq-title">Encounters with no vitals recorded</div>
+                <div class="dq-desc">OPD and inpatient encounters where vitals were never entered by nursing staff.</div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:6px;padding:4px 0;font-size:11px">View encounters →</button>
+              </div>
+              <div class="dq-count" style="color:var(--warn)">94</div>
+            </div>
+            <div class="dq-issue" style="border-bottom:none">
+              <div class="dq-icon low"><i class="fa-solid fa-id-card"></i></div>
+              <div class="dq-body">
+                <div class="dq-title">Missing NRC / date of birth</div>
+                <div class="dq-desc">Patients without national ID or date of birth on record — impacts demographic reporting.</div>
+                <button class="btn btn-ghost btn-sm" style="margin-top:6px;padding:4px 0;font-size:11px">View patients →</button>
+              </div>
+              <div class="dq-count" style="color:var(--primary)">58</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3: AUDIT / ACTIVITY LOG -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3><i class="fa-solid fa-file-shield fa-fw" style="color:var(--primary)"></i> System Audit Log</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select style="padding:5px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:12px;font-family:inherit;outline:none;color:var(--text2);background:#fff">
+              <option>All events</option>
+              <option>Patient registered</option>
+              <option>Record updated</option>
+              <option>User login</option>
+              <option>Record deleted</option>
+            </select>
+            <button class="btn btn-outline btn-sm"><i class="fa-solid fa-download"></i> Export</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding-top:8px">
+          <div class="audit-row">
+            <div class="audit-icon ai-create"><i class="fa-solid fa-user-plus"></i></div>
+            <div class="audit-body">
+              <div class="audit-text"><strong>Nurse B. Mutale</strong> registered patient <strong>Peter Nkonde</strong> (SC-00421)</div>
+              <div class="audit-meta"><i class="fa-regular fa-clock"></i> Today 09:41 · UTH Lusaka · IP 192.168.1.42</div>
+            </div>
+          </div>
+          <div class="audit-row">
+            <div class="audit-icon ai-update"><i class="fa-solid fa-pen-to-square"></i></div>
+            <div class="audit-body">
+              <div class="audit-text"><strong>Dr. C. Mwale</strong> updated encounter record for <strong>Esther Zulu</strong> — added diagnosis</div>
+              <div class="audit-meta"><i class="fa-regular fa-clock"></i> Today 09:38 · UTH Lusaka · IP 192.168.1.18</div>
+            </div>
+          </div>
+          <div class="audit-row">
+            <div class="audit-icon ai-create"><i class="fa-solid fa-stethoscope"></i></div>
+            <div class="audit-body">
+              <div class="audit-text"><strong>Dr. C. Mwale</strong> created new encounter for <strong>Esther Zulu</strong> (SC-00089) — OPD</div>
+              <div class="audit-meta"><i class="fa-regular fa-clock"></i> Today 09:30 · UTH Lusaka · IP 192.168.1.18</div>
+            </div>
+          </div>
+          <div class="audit-row">
+            <div class="audit-icon ai-login"><i class="fa-solid fa-right-to-bracket"></i></div>
+            <div class="audit-body">
+              <div class="audit-text"><strong>Dr. E. Lungu</strong> logged in successfully</div>
+              <div class="audit-meta"><i class="fa-regular fa-clock"></i> Today 08:55 · UTH Lusaka · IP 192.168.1.27</div>
+            </div>
+          </div>
+          <div class="audit-row">
+            <div class="audit-icon ai-update"><i class="fa-solid fa-heart-pulse"></i></div>
+            <div class="audit-body">
+              <div class="audit-text"><strong>Nurse B. Mutale</strong> recorded vitals for <strong>Grace Mutale</strong> — BP 118/76, Temp 36.8°C</div>
+              <div class="audit-meta"><i class="fa-regular fa-clock"></i> Today 08:44 · UTH Lusaka · IP 192.168.1.42</div>
+            </div>
+          </div>
+          <div class="audit-row">
+            <div class="audit-icon ai-login"><i class="fa-solid fa-right-to-bracket"></i></div>
+            <div class="audit-body">
+              <div class="audit-text"><strong>Nurse B. Mutale</strong> logged in successfully</div>
+              <div class="audit-meta"><i class="fa-regular fa-clock"></i> Today 07:02 · UTH Lusaka · IP 192.168.1.42</div>
+            </div>
+          </div>
+          <div class="audit-row" style="border-bottom:none">
+            <div class="audit-icon ai-delete"><i class="fa-solid fa-trash"></i></div>
+            <div class="audit-body">
+              <div class="audit-text"><strong>System Admin</strong> deactivated user account <strong>dr.tembo</strong> — inactive 60+ days</div>
+              <div class="audit-meta"><i class="fa-regular fa-clock"></i> Yesterday 16:12 · Admin console · IP 10.0.0.1</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:10px 14px;border-top:1px solid var(--border);text-align:center">
+          <button class="btn btn-ghost btn-sm">Load more entries →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div><!-- /inner flex -->
+</div><!-- /app-shell -->
+
+<script>
+/* ── Auth ── */
+let token = localStorage.getItem('emr_token');
+let currentUser = JSON.parse(localStorage.getItem('emr_user') || 'null');
+
+function fillLogin(u, p) {
+  document.getElementById('l-user').value = u;
+  document.getElementById('l-pass').value = p;
+}
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const err = document.getElementById('l-err');
+  err.style.display = 'none';
+  try {
+    const res = await fetch('/api/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error || 'Invalid credentials'; err.style.display='block'; return; }
+    token = data.token; currentUser = data.user;
+    localStorage.setItem('emr_token', token);
+    localStorage.setItem('emr_user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) { err.textContent='Cannot reach server. Is the backend running?'; err.style.display='block'; }
+}
+function logout() {
+  token=null; currentUser=null;
+  localStorage.removeItem('emr_token'); localStorage.removeItem('emr_user');
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+async function api(path, opts={}) {
+  const res = await fetch(path, {
+    ...opts, headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`,...(opts.headers||{})}
+  });
+  if (res.status===401) { logout(); return null; }
+  return res.json();
+}
+async function showApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').style.display='flex';
+  if (currentUser) {
+    const ini = currentUser.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+    document.getElementById('sb-avatar').textContent = ini;
+    document.getElementById('sb-name').textContent = currentUser.name;
+    document.getElementById('sb-role').textContent = currentUser.role.toUpperCase();
+    document.getElementById('tb-user-avatar').textContent = ini;
+  }
+  const d = await api('/api/dashboard');
+  if (d) {
+    const s = d.stats || {};
+    setVal('stat-patients',   s.total_patients     ?? '—');
+    setVal('stat-encounters', s.total_encounters   ?? '—');
+    setVal('stat-monthly',    s.monthly_encounters ?? '—');
+    setVal('stat-today',      s.today_encounters   ?? '—');
+    setVal('sub-patients',    `+${s.new_this_week??0} this week`);
+    setVal('sub-users',       `${s.total_users??0} active system users`);
+  }
+}
+function setVal(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
+if (token && currentUser) { showApp(); }
+
+/* ── Facility drill-down ── */
+function filterFacility(name) {
+  document.querySelectorAll('.facility-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  document.getElementById('filterBar').style.display = 'flex';
+  document.getElementById('filterBarName').textContent = name;
+  document.getElementById('facilityFilter').style.display = 'inline-flex';
+  document.getElementById('filterName').textContent = name;
+  document.querySelector('.page').scrollTo({top:0, behavior:'smooth'});
+}
+function clearFilter() {
+  document.querySelectorAll('.facility-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('filterBar').style.display = 'none';
+  document.getElementById('facilityFilter').style.display = 'none';
+}
+</script>
+</body>
+</html>

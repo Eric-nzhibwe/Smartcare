@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartCare EMR — Zambia</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+/* ── reset & tokens ── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surface:#ffffff;--surface2:#f7f9fc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --primary:#0f4c81;--primary-light:#1a69b3;--primary-ghost:#e8f0fb;
+  --accent:#00a878;--accent-light:#e6f7f3;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --warn:#d97706;--warn-light:#fffbeb;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+  --sidebar-w:220px;
+}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%}
+</style>
+</head>
+<style>
+/* ── login ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f4c81 0%,#1a69b3 50%,#00a878 100%);padding:16px}
+.login-card{background:white;border-radius:16px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo h1{font-size:22px;font-weight:600;color:var(--primary);letter-spacing:-.3px}
+.login-logo p{font-size:12px;color:var(--text3);margin-top:2px}
+.login-logo .cross{font-size:36px;margin-bottom:8px}
+.demo-accounts{background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2)}
+.demo-accounts strong{display:block;margin-bottom:6px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.demo-row{display:flex;gap:8px;flex-wrap:wrap}
+.demo-chip{background:white;border:1px solid var(--border2);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s;font-size:11px;touch-action:manipulation}
+.demo-chip:hover,.demo-chip:active{background:var(--primary);color:white;border-color:var(--primary)}
+
+/* ── app shell ── */
+#app{display:none;height:100vh;flex-direction:row;overflow:hidden}
+
+/* ── sidebar overlay (mobile) ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99}
+.sidebar-overlay.open{display:block}
+
+/* ── sidebar ── */
+.sidebar{
+  width:var(--sidebar-w);background:var(--primary);
+  display:flex;flex-direction:column;flex-shrink:0;
+  overflow:hidden;z-index:100;transition:transform .25s ease;
+}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo h1{font-size:16px;font-weight:600;color:white;letter-spacing:-.2px}
+.sidebar-logo p{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-user{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:white;flex-shrink:0}
+.user-info p{font-size:12px;font-weight:500;color:white;line-height:1.3}
+.user-info span{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:12px 18px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;font-weight:400;transition:all .15s;border-left:3px solid transparent;touch-action:manipulation}
+.nav-item:hover,.nav-item:active{color:white;background:rgba(255,255,255,.07)}
+.nav-item.active{color:white;background:rgba(255,255,255,.13);border-left-color:var(--accent);font-weight:500}
+.nav-item i{width:16px;font-size:14px;text-align:center;flex-shrink:0;opacity:.8}
+.nav-item.active i{opacity:1}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1)}
+.logout-btn{width:100%;padding:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.logout-btn:hover{background:rgba(255,255,255,.15);color:white}
+</style>
+<style>
+/* ── main content ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.topbar-left{display:flex;align-items:center;gap:12px;min-width:0}
+.topbar h2{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--text);flex-shrink:0;touch-action:manipulation}
+.hamburger:hover{background:var(--bg)}
+.hamburger i{font-size:18px}
+.page{flex:1;overflow-y:auto;padding:20px}
+
+/* ── stat cards ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:white;border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-card .value{font-size:26px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.5px}
+.stat-card .sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-card.accent{border-left:3px solid var(--accent)}
+.stat-card.primary{border-left:3px solid var(--primary)}
+.stat-card.warn{border-left:3px solid var(--warn)}
+.stat-card.danger{border-left:3px solid var(--danger)}
+
+/* ── generic card ── */
+.card{background:white;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:16px 18px}
+
+/* ── grids ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* ── table ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.patient-name{font-weight:500;color:var(--text)}
+
+/* ── badges ── */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-green{background:var(--accent-light);color:#065f46}
+.badge-blue{background:var(--primary-ghost);color:var(--primary)}
+.badge-warn{background:var(--warn-light);color:#92400e}
+.badge-red{background:var(--danger-light);color:var(--danger)}
+.badge-gray{background:#f1f5f9;color:var(--text3)}
+
+/* ── forms ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-grid.cols-1{grid-template-columns:1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.span-2{grid-column:span 2}
+label{font-size:12px;font-weight:500;color:var(--text2);letter-spacing:.1px}
+input,select,textarea{padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);background:white;transition:border-color .15s,box-shadow .15s;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(26,105,179,.1)}
+textarea{resize:vertical;min-height:70px}
+.section-divider{grid-column:1/-1;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px}
+.section-divider h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)}
+</style>
+<style>
+/* ── buttons ── */
+.btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;white-space:nowrap}
+.btn-primary{background:var(--primary);color:white}
+.btn-primary:hover{background:var(--primary-light)}
+.btn-accent{background:var(--accent);color:white}
+.btn-accent:hover{background:#00956a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-outline:hover{background:var(--surface2)}
+.btn-ghost{background:transparent;color:var(--primary);border:none;padding:6px 10px;font-size:12px}
+.btn-ghost:hover{background:var(--primary-ghost)}
+.btn-danger{background:var(--danger);color:white}
+.btn-sm{padding:5px 11px;font-size:12px}
+
+/* ── search bar ── */
+.search-bar{display:flex;align-items:center;gap:10px;background:white;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;flex:1;max-width:380px}
+.search-bar input{border:none;outline:none;font-size:13px;flex:1;background:transparent;color:var(--text);padding:0;box-shadow:none}
+.search-bar i{color:var(--text3);flex-shrink:0;font-size:13px}
+
+/* ── patient header ── */
+.patient-header{display:flex;align-items:flex-start;gap:16px;padding:18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.patient-avatar{width:52px;height:52px;border-radius:50%;background:var(--primary-ghost);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:var(--primary);flex-shrink:0}
+.patient-meta{flex:1;min-width:0}
+.patient-meta h2{font-size:18px;font-weight:600;letter-spacing:-.3px}
+.patient-meta .smart-id{font-family:'DM Mono',monospace;font-size:12px;color:var(--primary);background:var(--primary-ghost);padding:2px 8px;border-radius:4px;display:inline-block;margin:3px 0}
+.patient-actions{display:flex;gap:8px;flex-wrap:wrap}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px}
+.info-item .key{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.info-item .val{font-size:13px;font-weight:500;color:var(--text)}
+
+/* ── vitals ── */
+.vitals-row{display:flex;gap:10px;flex-wrap:wrap;padding:14px 18px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.vital{background:white;border-radius:8px;padding:10px 14px;border:1px solid var(--border);text-align:center;min-width:76px}
+.vital .v-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.vital .v-val{font-size:16px;font-weight:600;color:var(--primary);margin-top:2px}
+.vital .v-unit{font-size:10px;color:var(--text3)}
+
+/* ── encounter cards ── */
+.enc-card{border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;overflow:hidden}
+.enc-header{padding:12px 14px;background:var(--surface2);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:8px}
+.enc-header-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0;flex-wrap:wrap}
+.enc-header-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.enc-body{padding:14px 16px;display:none}
+.enc-body.open{display:block}
+.enc-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.enc-detail .key{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+.enc-detail .val{font-size:13px;color:var(--text2)}
+
+/* ── bar charts ── */
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:12px;color:var(--text2);width:110px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .5s ease}
+.bar-fill.accent{background:var(--accent)}
+.bar-val{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
+
+/* ── trend chart ── */
+.trend-chart{display:flex;align-items:flex-end;gap:6px;height:60px;padding:0 4px}
+.trend-bar{flex:1;background:var(--primary);border-radius:3px 3px 0 0;opacity:.7;transition:opacity .15s;min-width:0;position:relative}
+.trend-bar:hover{opacity:1}
+.trend-bar .tip{position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:var(--text);color:white;font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.trend-bar:hover .tip{opacity:1}
+
+/* ── toast ── */
+.toast{position:fixed;bottom:24px;right:16px;left:16px;max-width:360px;margin:0 auto;background:var(--text);color:white;padding:11px 18px;border-radius:var(--radius-sm);font-size:13px;z-index:1000;transform:translateY(80px);opacity:0;transition:all .3s;box-shadow:var(--shadow-md)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--accent)}
+.toast.error{background:var(--danger)}
+
+/* ── modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:16px 16px 0 0;width:100%;max-width:700px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,.2)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-header h3{font-size:16px;font-weight:600}
+.modal-body{padding:20px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;flex-wrap:wrap}
+
+/* ── misc utilities ── */
+.empty-state{text-align:center;padding:40px;color:var(--text3)}
+.empty-state p{font-size:13px}
+.tag{display:inline-block;background:var(--primary-ghost);color:var(--primary);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace}
+.flex{display:flex;align-items:center}
+.gap-2{gap:8px}
+.gap-3{gap:12px}
+.mb-4{margin-bottom:16px}
+.text-sm{font-size:12px;color:var(--text3)}
+.loading{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+.section-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px}
+.page-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+</style>
+<style>
+/* ════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ════════════════════════════════════════════════ */
+
+/* ── tablet: ≤ 900px — collapse to 2-col grids ── */
+@media (max-width: 900px) {
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:1fr 1fr}
+  .info-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ── mobile: ≤ 640px — full single column ── */
+@media (max-width: 640px) {
+  /* sidebar becomes a slide-in drawer */
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;
+    transform:translateX(-100%);
+    box-shadow:4px 0 24px rgba(0,0,0,.2);
+  }
+  .sidebar.open{transform:translateX(0)}
+
+  /* show hamburger */
+  .hamburger{display:flex}
+
+  /* hide facility/date from topbar to save space */
+  #topbar-facility,#topbar-date{display:none}
+
+  /* full-width main */
+  #app{height:100vh}
+  .page{padding:14px}
+
+  /* single column everything */
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .info-grid{grid-template-columns:1fr 1fr}
+  .enc-detail-grid{grid-template-columns:1fr}
+
+  /* forms go single column on mobile */
+  .form-grid,.form-grid.cols-3{grid-template-columns:1fr}
+  .field.span-2{grid-column:span 1}
+
+  /* search bar fills width */
+  .search-bar{max-width:100%}
+
+  /* patient header stacks */
+  .patient-header{flex-direction:column}
+  .patient-actions{width:100%}
+  .patient-actions .btn{flex:1;justify-content:center}
+
+  /* login card */
+  .login-card{padding:28px 22px}
+
+  /* modal is full-screen bottom sheet */
+  .modal{max-height:95vh;border-radius:16px 16px 0 0}
+  .modal-footer{flex-direction:column}
+  .modal-footer .btn{width:100%;justify-content:center}
+
+  /* topbar */
+  .topbar{padding:0 14px}
+
+  /* toast anchored to bottom */
+  .toast{bottom:16px;right:12px;left:12px}
+
+  /* encounter header wraps nicely */
+  .enc-header{flex-wrap:wrap}
+  .enc-header-right{width:100%;justify-content:space-between}
+}
+
+/* ── very small: ≤ 380px — stat cards 1-col ── */
+@media (max-width: 380px) {
+  .stats-grid{grid-template-columns:1fr}
+}
+</style>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross"><i class="fa-solid fa-hospital" style="color:var(--primary)"></i></div>
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Republic of Zambia</p>
+    </div>
+    <div class="demo-accounts">
+      <strong>Quick login</strong>
+      <div class="demo-row">
+        <div class="demo-chip" onclick="fillLogin('doctor','doctor123')">Doctor</div>
+        <div class="demo-chip" onclick="fillLogin('nurse','nurse123')">Nurse</div>
+        <div class="demo-chip" onclick="fillLogin('admin','admin123')">Admin</div>
+        <div class="demo-chip" onclick="fillLogin('doctor2','doctor123')">Dr. Lungu</div>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label><i class="fas fa-user"></i> Username</label>
+      <input type="text" id="l-user" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="field" style="margin-bottom:20px">
+      <label><i class="fas fa-clock"></i> Password</label>
+      <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="doLogin()">
+      <i class="fa-solid fa-sign-in-alt"></i> Sign In
+    </button>
+    <p id="l-err" style="color:var(--danger);font-size:12px;margin-top:10px;text-align:center;display:none"></p>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app">
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1><i class="fa-solid fa-hospital-user" style="margin-right:6px"></i>SmartCare</h1>
+      <p>EMR System · Zambia</p>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">U</div>
+      <div class="user-info">
+        <p id="sidebar-name">User</p>
+        <span id="sidebar-role">Role</span>
+      </div>
+    </div>
+    <nav id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Toggle menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h2 id="page-title">Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <span class="text-sm" id="topbar-facility"></span>
+        <span id="topbar-date" class="text-sm"></span>
+      </div>
+    </div>
+    <div class="page" id="page-content"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Modal</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()" style="padding:4px 8px;font-size:16px"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('emr_token');
+let currentUser = JSON.parse(localStorage.getItem('emr_user') || 'null');
+let currentPage = 'dashboard';
+
+// ── sidebar (mobile) ──────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('sidebar-overlay');
+  s.classList.toggle('open');
+  o.classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ── auth ──────────────────────────────────────────────────────────────────────
+function fillLogin(u, p) {
+  document.getElementById('l-user').value = u;
+  document.getElementById('l-pass').value = p;
+}
+
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const err = document.getElementById('l-err');
+  err.style.display = 'none';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error; err.style.display = 'block'; return; }
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('emr_token', token);
+    localStorage.setItem('emr_user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) { err.textContent = 'Server error. Is the backend running?'; err.style.display = 'block'; }
+}
+
+function logout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('emr_token'); localStorage.removeItem('emr_user');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function api(path, opts={}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {'Content-Type':'application/json','Authorization':`Bearer ${token}`, ...(opts.headers||{})}
+  });
+  if (res.status === 401) { logout(); return null; }
+  return res.json();
+}
+
+// ── nav config per role ───────────────────────────────────────────────────────
+const NAV_ITEMS = {
+  // Doctors: own workload + patients + encounters + reports (no user mgmt)
+  doctor: [
+    {page:'dashboard', icon:'fa-solid fa-table-cells-large', label:'Dashboard'},
+    {page:'patients',  icon:'fa-solid fa-user-injured',      label:'Patients'},
+    {page:'encounters',icon:'fa-solid fa-file-medical',      label:'Encounters'},
+    {page:'reports',   icon:'fa-solid fa-chart-bar',         label:'Reports'},
+  ],
+  // Nurses: facility patients + encounters + follow-up focus (no user mgmt, no full reports)
+  nurse: [
+    {page:'dashboard', icon:'fa-solid fa-table-cells-large', label:'Dashboard'},
+    {page:'patients',  icon:'fa-solid fa-user-injured',      label:'Patients'},
+    {page:'encounters',icon:'fa-solid fa-file-medical',      label:'Encounters'},
+  ],
+  // Admins: everything
+  admin: [
+    {page:'dashboard', icon:'fa-solid fa-table-cells-large', label:'Dashboard'},
+    {page:'patients',  icon:'fa-solid fa-user-injured',      label:'Patients'},
+    {page:'encounters',icon:'fa-solid fa-file-medical',      label:'Encounters'},
+    {page:'reports',   icon:'fa-solid fa-chart-bar',         label:'Reports'},
+    {page:'users',     icon:'fa-solid fa-users-gear',        label:'Users'},
+  ],
+};
+
+function buildNav(role) {
+  const items = NAV_ITEMS[role] || NAV_ITEMS.admin;
+  document.getElementById('sidebar-nav').innerHTML = items.map(item => `
+    <div class="nav-item" data-page="${item.page}" onclick="navigate('${item.page}')">
+      <i class="${item.icon}"></i>
+      ${item.label}
+    </div>`).join('');
+}
+
+// ── app shell ─────────────────────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('sidebar-name').textContent = currentUser.name;
+  document.getElementById('sidebar-role').textContent = currentUser.role.toUpperCase();
+  document.getElementById('sidebar-avatar').textContent = currentUser.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('topbar-facility').textContent = currentUser.facility;
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-ZM',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
+  buildNav(currentUser.role);
+  navigate('dashboard');
+}
+
+function navigate(page) {
+  closeSidebar();
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const active = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (active) active.classList.add('active');
+  const titles = {dashboard:'Dashboard',patients:'Patients',encounters:'Clinical Encounters',reports:'Reports & Analytics',users:'User Management'};
+  document.getElementById('page-title').textContent = titles[page] || page;
+  document.getElementById('page-content').innerHTML = '<div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>';
+  pages_map[page]();
+}
+
+// ── toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── modal ─────────────────────────────────────────────────────────────────────
+function openModal(title, body, footer='') {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-footer').innerHTML = footer;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+function age(dob) {
+  return Math.floor((Date.now() - new Date(dob).getTime()) / (1000*60*60*24*365.25));
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-ZM',{year:'numeric',month:'short',day:'numeric'});
+}
+function genderBadge(g) {
+  return g === 'Male' ? '<span class="badge badge-blue">Male</span>' : '<span class="badge badge-green">Female</span>';
+}
+function encTypeBadge(t) {
+  const m = {OPD:'badge-blue','ART Clinic':'badge-green',Inpatient:'badge-warn',MCH:'badge-green','TB Clinic':'badge-warn'};
+  return `<span class="badge ${m[t]||'badge-gray'}">${t}</span>`;
+}
+function initials(name) { return (name||'').split(' ').map(w=>w[0]).slice(0,2).join(''); }
+</script>
+
+<script>
+// ── DASHBOARD — routes to correct view by role ────────────────────────────────
+async function renderDashboard() {
+  const d = await api('/api/dashboard');
+  if (!d) return;
+  if (d.role === 'doctor') renderDoctorDashboard(d);
+  else if (d.role === 'nurse') renderNurseDashboard(d);
+  else renderAdminDashboard(d);
+}
+
+// ── ADMIN DASHBOARD ───────────────────────────────────────────────────────────
+function renderAdminDashboard(d) {
+  const s = d.stats;
+  const maxTrend = Math.max(...d.monthly_trend.map(t=>t.cnt), 1);
+  const maxProv  = Math.max(...d.province_dist.map(p=>p.cnt), 1);
+  const maxDiag  = Math.max(...d.top_diagnoses.map(x=>x.cnt), 1);
+  const maxFacP  = Math.max(...d.facility_patients.map(x=>x.cnt), 1);
+  document.getElementById('page-content').innerHTML = `
+  <div style="margin-bottom:14px"><span style="font-size:12px;color:var(--text3)"><i class="fa-solid fa-shield-halved fa-fw"></i> System Administrator — Full access</span></div>
+  <div class="stats-grid">
+    <div class="stat-card primary"><div class="label"><i class="fa-solid fa-users fa-fw"></i> Total Patients</div><div class="value">${s.total_patients}</div><div class="sub">+${s.new_this_week} this week</div></div>
+    <div class="stat-card accent"><div class="label"><i class="fa-solid fa-stethoscope fa-fw"></i> Total Encounters</div><div class="value">${s.total_encounters}</div><div class="sub">All clinical visits</div></div>
+    <div class="stat-card warn"><div class="label"><i class="fa-solid fa-calendar-days fa-fw"></i> This Month</div><div class="value">${s.monthly_encounters}</div><div class="sub">Encounters recorded</div></div>
+    <div class="stat-card danger"><div class="label"><i class="fa-solid fa-clock fa-fw"></i> Today</div><div class="value">${s.today_encounters}</div><div class="sub">Encounters today</div></div>
+  </div>
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-chart-line fa-fw" style="color:var(--primary)"></i> Monthly encounter trend</h3></div>
+      <div class="card-body">
+        <div class="trend-chart">${d.monthly_trend.map(m=>`<div class="trend-bar" style="height:${Math.max(6,Math.round((m.cnt/maxTrend)*56))}px"><div class="tip">${m.month}: ${m.cnt}</div></div>`).join('')}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px">${d.monthly_trend.map(m=>`<span style="font-size:10px;color:var(--text3);flex:1;text-align:center">${m.month.slice(5)}</span>`).join('')}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-hospital fa-fw" style="color:var(--primary)"></i> Patients by facility</h3></div>
+      <div class="card-body"><div class="bar-chart">${d.facility_patients.map(f=>`<div class="bar-row"><div class="bar-label">${f.facility||'Unknown'}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((f.cnt/maxFacP)*100)}%"></div></div><div class="bar-val">${f.cnt}</div></div>`).join('')}</div></div>
+    </div>
+  </div>
+  <div class="grid-3 mb-4">
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-venus-mars fa-fw" style="color:var(--accent)"></i> Gender distribution</h3></div>
+      <div class="card-body"><div class="bar-chart">${d.gender_dist.map(g=>`<div class="bar-row"><div class="bar-label">${g.gender||'Unknown'}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((g.cnt/s.total_patients)*100)}%"></div></div><div class="bar-val">${g.cnt}</div></div>`).join('')}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-map-location-dot fa-fw" style="color:var(--accent)"></i> By province</h3></div>
+      <div class="card-body"><div class="bar-chart">${d.province_dist.map(p=>`<div class="bar-row"><div class="bar-label">${p.province||'Unknown'}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((p.cnt/maxProv)*100)}%"></div></div><div class="bar-val">${p.cnt}</div></div>`).join('')}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-disease fa-fw" style="color:var(--warn)"></i> Top diagnoses</h3></div>
+      <div class="card-body"><div class="bar-chart">${d.top_diagnoses.map(x=>`<div class="bar-row"><div class="bar-label">${x.diagnosis}</div><div class="bar-track"><div class="bar-fill accent" style="width:${Math.round((x.cnt/maxDiag)*100)}%"></div></div><div class="bar-val">${x.cnt}</div></div>`).join('')}</div></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-user-plus fa-fw"></i> Recent registrations</h3><button class="btn btn-ghost btn-sm" onclick="navigate('patients')">View all →</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Patient</th><th>SmartID</th><th>Registered</th></tr></thead><tbody>
+        ${d.recent_patients.map(p=>`<tr style="cursor:pointer" onclick="viewPatient(${p.id})"><td><div style="display:flex;align-items:center;gap:8px"><div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">${initials(p.first_name+' '+p.last_name)}</div><span class="patient-name">${p.first_name} ${p.last_name}</span></div></td><td><span class="tag">${p.smart_id}</span></td><td>${fmtDate(p.registered_at)}</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left fa-fw"></i> Recent encounters</h3><button class="btn btn-ghost btn-sm" onclick="navigate('encounters')">View all →</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Patient</th><th>Type</th><th>Date</th></tr></thead><tbody>
+        ${d.recent_encounters.map(e=>`<tr><td class="patient-name">${e.patient_name}</td><td>${encTypeBadge(e.encounter_type)}</td><td>${fmtDate(e.visit_date)}</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+  </div>`;
+}
+</script>
+
+<script>
+// ── DOCTOR DASHBOARD ──────────────────────────────────────────────────────────
+function renderDoctorDashboard(d) {
+  const s = d.stats;
+  const maxTrend = Math.max(...(d.monthly_trend.length ? d.monthly_trend.map(t=>t.cnt) : [1]), 1);
+  const maxDiag  = Math.max(...(d.top_diagnoses.length ? d.top_diagnoses.map(x=>x.cnt) : [1]), 1);
+  const maxType  = Math.max(...(d.enc_types.length ? d.enc_types.map(x=>x.cnt) : [1]), 1);
+  document.getElementById('page-content').innerHTML = `
+  <div style="margin-bottom:14px"><span style="font-size:12px;color:var(--text3)"><i class="fa-solid fa-user-doctor fa-fw"></i> ${d.clinician_name} — ${d.facility}</span></div>
+  <div class="stats-grid">
+    <div class="stat-card primary"><div class="label"><i class="fa-solid fa-users fa-fw"></i> My Patients</div><div class="value">${s.total_my_patients}</div><div class="sub">Patients I have seen</div></div>
+    <div class="stat-card accent"><div class="label"><i class="fa-solid fa-stethoscope fa-fw"></i> My Encounters</div><div class="value">${s.total_my_encounters}</div><div class="sub">All my clinical visits</div></div>
+    <div class="stat-card warn"><div class="label"><i class="fa-solid fa-calendar-check fa-fw"></i> Upcoming Follow-ups</div><div class="value">${s.upcoming_followups}</div><div class="sub">Next 14 days</div></div>
+    <div class="stat-card danger"><div class="label"><i class="fa-solid fa-triangle-exclamation fa-fw"></i> Overdue Follow-ups</div><div class="value">${s.overdue_followups}</div><div class="sub">Past due date</div></div>
+  </div>
+  ${d.overdue_followups.length > 0 ? `
+  <div class="card mb-4" style="border-left:3px solid var(--danger)">
+    <div class="card-header"><h3><i class="fa-solid fa-triangle-exclamation fa-fw" style="color:var(--danger)"></i> Overdue Follow-ups</h3></div>
+    <div class="table-wrap"><table><thead><tr><th>Patient</th><th>SmartID</th><th>Due Date</th><th>Last Diagnosis</th><th>Overdue</th></tr></thead><tbody>
+      ${d.overdue_followups.map(f=>`<tr style="cursor:pointer" onclick="viewPatient(${f.patient_id})"><td class="patient-name">${f.patient_name}</td><td><span class="tag">${f.smart_id}</span></td><td style="color:var(--danger)">${fmtDate(f.follow_up_date)}</td><td>${f.last_diagnosis||'—'}</td><td><span class="badge badge-red">${f.days_overdue}d</span></td></tr>`).join('')}
+    </tbody></table></div>
+  </div>` : ''}
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-calendar-plus fa-fw" style="color:var(--accent)"></i> Upcoming Follow-ups (14 days)</h3></div>
+      <div class="table-wrap"><table><thead><tr><th>Patient</th><th>Follow-up</th><th>Diagnosis</th><th></th></tr></thead><tbody>
+        ${d.upcoming_followups.length === 0
+          ? `<tr><td colspan="4"><div class="empty-state"><p>No upcoming follow-ups</p></div></td></tr>`
+          : d.upcoming_followups.map(f=>`<tr style="cursor:pointer" onclick="viewPatient(${f.patient_id})"><td class="patient-name">${f.patient_name}</td><td>${fmtDate(f.follow_up_date)}</td><td style="font-size:12px">${f.last_diagnosis||'—'}</td><td><span class="badge ${f.days_away===0?'badge-warn':f.days_away<=3?'badge-warn':'badge-gray'}">${f.days_away===0?'Today':f.days_away+'d'}</span></td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-chart-line fa-fw" style="color:var(--primary)"></i> My monthly workload</h3></div>
+      <div class="card-body">
+        <div class="trend-chart">${d.monthly_trend.map(m=>`<div class="trend-bar" style="height:${Math.max(6,Math.round((m.cnt/maxTrend)*56))}px"><div class="tip">${m.month}: ${m.cnt}</div></div>`).join('')}</div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px">${d.monthly_trend.map(m=>`<span style="font-size:10px;color:var(--text3);flex:1;text-align:center">${m.month.slice(5)}</span>`).join('')}</div>
+      </div>
+    </div>
+  </div>
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-disease fa-fw" style="color:var(--warn)"></i> My top diagnoses</h3></div>
+      <div class="card-body">${d.top_diagnoses.length === 0 ? `<div class="empty-state"><p>No diagnoses recorded yet</p></div>` : `<div class="bar-chart">${d.top_diagnoses.map(x=>`<div class="bar-row"><div class="bar-label">${x.diagnosis}</div><div class="bar-track"><div class="bar-fill accent" style="width:${Math.round((x.cnt/maxDiag)*100)}%"></div></div><div class="bar-val">${x.cnt}</div></div>`).join('')}</div>`}</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-clipboard-list fa-fw" style="color:var(--primary)"></i> My encounter types</h3></div>
+      <div class="card-body">${d.enc_types.length === 0 ? `<div class="empty-state"><p>No encounters yet</p></div>` : `<div class="bar-chart">${d.enc_types.map(e=>`<div class="bar-row"><div class="bar-label">${e.encounter_type}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((e.cnt/maxType)*100)}%"></div></div><div class="bar-val">${e.cnt}</div></div>`).join('')}</div>`}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3><i class="fa-solid fa-clock-rotate-left fa-fw"></i> My recent encounters</h3><button class="btn btn-ghost btn-sm" onclick="navigate('encounters')">View all →</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Patient</th><th>Type</th><th>Diagnosis</th><th>Date</th></tr></thead><tbody>
+      ${d.recent_encounters.length === 0
+        ? `<tr><td colspan="4"><div class="empty-state"><p>No encounters recorded yet</p></div></td></tr>`
+        : d.recent_encounters.map(e=>`<tr style="cursor:pointer" onclick="viewPatient(${e.patient})"><td class="patient-name">${e.patient_name}</td><td>${encTypeBadge(e.encounter_type)}</td><td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.diagnosis||e.chief_complaint||'—'}</td><td>${fmtDate(e.visit_date)}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+}
+</script>
+
+<script>
+// ── NURSE DASHBOARD ───────────────────────────────────────────────────────────
+function renderNurseDashboard(d) {
+  const s = d.stats;
+  const maxType = Math.max(...(d.enc_types.length ? d.enc_types.map(x=>x.cnt) : [1]), 1);
+  document.getElementById('page-content').innerHTML = `
+  <!-- identity bar + action buttons -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <span style="font-size:12px;color:var(--text3)"><i class="fa-solid fa-user-nurse fa-fw"></i> ${d.nurse_name} — ${d.facility}</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="showRegisterModal()"><i class="fa-solid fa-user-plus"></i> Register Patient</button>
+      <button class="btn btn-accent btn-sm" onclick="showVitalsSearchModal()"><i class="fa-solid fa-heart-pulse"></i> Record Vitals</button>
+    </div>
+  </div>
+  <!-- stat cards -->
+  <div class="stats-grid">
+    <div class="stat-card primary"><div class="label"><i class="fa-solid fa-users fa-fw"></i> Facility Patients</div><div class="value">${s.total_patients}</div><div class="sub">+${s.registered_week} this week</div></div>
+    <div class="stat-card accent"><div class="label"><i class="fa-solid fa-stethoscope fa-fw"></i> Encounters Today</div><div class="value">${s.encounters_today}</div><div class="sub">${s.registered_today} new reg${s.registered_today!==1?'s':''} today</div></div>
+    <div class="stat-card warn"><div class="label"><i class="fa-solid fa-heart-pulse fa-fw"></i> Vitals Pending</div><div class="value">${s.vitals_pending}</div><div class="sub">Patients not yet triaged</div></div>
+    <div class="stat-card danger"><div class="label"><i class="fa-solid fa-triangle-exclamation fa-fw"></i> Allergy Alerts</div><div class="value">${s.allergy_count}</div><div class="sub">Known allergies on file</div></div>
+  </div>
+  <!-- triage queue -->
+  <div class="card mb-4" style="margin-top:16px">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-clipboard-list fa-fw" style="color:var(--primary)"></i> Today's Triage Queue — ${d.facility}</h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge badge-blue">${s.encounters_today} today</span>
+        ${s.vitals_pending>0?`<span class="badge badge-warn"><i class="fa-solid fa-heart-pulse"></i> ${s.vitals_pending} pending</span>`:'<span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> All triaged</span>'}
+      </div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Patient</th><th>Age/Sex</th><th>Type</th><th>Chief Complaint</th><th>Clinician</th><th>Vitals</th><th>Allergy</th><th></th></tr></thead>
+      <tbody>
+        ${d.todays_queue.length===0
+          ?`<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-circle-check" style="font-size:22px;color:var(--accent);display:block;margin-bottom:8px"></i><p>No encounters today yet</p></div></td></tr>`
+          :d.todays_queue.map(e=>`
+          <tr style="cursor:pointer" onclick="viewPatient(${e.patient_id})">
+            <td><div style="display:flex;align-items:center;gap:8px">
+              <div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">${initials(e.patient_name)}</div>
+              <div><div class="patient-name">${e.patient_name}</div><div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${e.smart_id}</div></div>
+            </div></td>
+            <td style="font-size:12px">${e.age}y ${e.gender==='Male'?'M':'F'}</td>
+            <td>${encTypeBadge(e.encounter_type)}</td>
+            <td style="font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.chief_complaint||'<span style="color:var(--text3)">—</span>'}</td>
+            <td style="font-size:12px">${e.clinician_name}</td>
+            <td>${e.has_vitals?`<span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> ${e.vitals_summary}</span>`:`<span class="badge badge-warn"><i class="fa-solid fa-triangle-exclamation"></i> Pending</span>`}</td>
+            <td>${e.has_allergy?`<span class="badge badge-red" title="${e.allergies}"><i class="fa-solid fa-triangle-exclamation"></i> ${e.allergies.length>16?e.allergies.slice(0,16)+'…':e.allergies}</span>`:'<span class="badge badge-gray">None</span>'}</td>
+            <td onclick="event.stopPropagation()">
+              <button class="btn btn-outline btn-sm" onclick="showQuickVitalsModal(${e.encounter_id},'${e.patient_name.replace(/'/g,"\\'")}')" title="Record vitals">
+                <i class="fa-solid fa-heart-pulse"></i>
+              </button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table></div>
+  </div>
+  <!-- follow-ups row -->
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-calendar-check fa-fw" style="color:var(--accent)"></i> Follow-ups This Week</h3>
+        <span class="badge badge-blue">${s.upcoming_followups}</span>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Patient</th><th>Type</th><th>Date</th><th>Clinician</th></tr></thead>
+        <tbody>
+          ${d.upcoming_followups.length===0
+            ?`<tr><td colspan="4"><div class="empty-state"><p>No follow-ups this week</p></div></td></tr>`
+            :d.upcoming_followups.map(f=>`
+            <tr style="cursor:pointer" onclick="viewPatient(${f.patient_id})">
+              <td><div class="patient-name">${f.patient_name}</div><div style="font-size:11px;color:var(--text3)">${f.last_diagnosis?f.last_diagnosis.slice(0,22)+(f.last_diagnosis.length>22?'…':''):'—'}</div></td>
+              <td>${encTypeBadge(f.encounter_type)}</td>
+              <td>${f.days_away===0?'<span class="badge badge-warn">Today</span>':f.days_away===1?'<span class="badge badge-warn">Tomorrow</span>':fmtDate(f.follow_up_date)}</td>
+              <td style="font-size:12px">${f.clinician_name}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card" style="${s.overdue_followups>0?'border-left:3px solid var(--danger)':''}">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-clock-rotate-left fa-fw" style="color:var(--danger)"></i> Overdue Follow-ups</h3>
+        ${s.overdue_followups>0?`<span class="badge badge-red">${s.overdue_followups} overdue</span>`:'<span class="badge badge-green">All clear</span>'}
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Patient</th><th>Type</th><th>Was Due</th><th>Days</th></tr></thead>
+        <tbody>
+          ${d.overdue_followups.length===0
+            ?`<tr><td colspan="4"><div class="empty-state"><p><i class="fa-solid fa-circle-check" style="color:var(--accent)"></i> No overdue follow-ups</p></div></td></tr>`
+            :d.overdue_followups.map(f=>`
+            <tr style="cursor:pointer" onclick="viewPatient(${f.patient_id})">
+              <td><div class="patient-name">${f.patient_name}</div><div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${f.smart_id}</div></td>
+              <td>${encTypeBadge(f.encounter_type)}</td>
+              <td style="font-size:12px;color:var(--danger)">${fmtDate(f.follow_up_date)}</td>
+              <td><span class="badge badge-red">${f.days_overdue}d</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <!-- allergy register + enc types -->
+  <div class="grid-2 mb-4">
+    <div class="card" style="${s.allergy_count>0?'border-left:3px solid var(--warn)':''}">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-shield-virus fa-fw" style="color:var(--warn)"></i> Allergy Alert Register</h3>
+        <span class="badge badge-warn">${s.allergy_count} patient${s.allergy_count!==1?'s':''}</span>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Patient</th><th>SmartID</th><th>Allergies</th><th>Blood Group</th></tr></thead>
+        <tbody>
+          ${d.allergy_patients.length===0
+            ?`<tr><td colspan="4"><div class="empty-state"><p>No allergy records on file</p></div></td></tr>`
+            :d.allergy_patients.map(p=>`
+            <tr style="cursor:pointer" onclick="viewPatient(${p.patient_id})">
+              <td class="patient-name">${p.patient_name}</td>
+              <td><span class="tag">${p.smart_id}</span></td>
+              <td><span class="badge badge-warn"><i class="fa-solid fa-triangle-exclamation"></i> ${p.allergies}</span></td>
+              <td style="font-size:12px">${p.blood_group||'—'}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fa-solid fa-chart-pie fa-fw" style="color:var(--primary)"></i> Encounter Types — ${d.facility}</h3></div>
+      <div class="card-body">${d.enc_types.length===0?`<div class="empty-state"><p>No encounters yet</p></div>`:`<div class="bar-chart">${d.enc_types.map(e=>`<div class="bar-row"><div class="bar-label">${e.encounter_type}</div><div class="bar-track"><div class="bar-fill accent" style="width:${Math.round((e.cnt/maxType)*100)}%"></div></div><div class="bar-val">${e.cnt}</div></div>`).join('')}</div>`}</div>
+    </div>
+  </div>
+  <!-- recently registered -->
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-user-plus fa-fw"></i> Recently Registered Patients</h3>
+      <button class="btn btn-ghost btn-sm" onclick="navigate('patients')">View all →</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Patient</th><th>SmartID</th><th>Age / Gender</th><th>Phone</th><th>Allergy</th><th>Registered</th></tr></thead>
+      <tbody>
+        ${d.recent_patients.length===0
+          ?`<tr><td colspan="6"><div class="empty-state"><p>No patients registered yet</p></div></td></tr>`
+          :d.recent_patients.map(p=>{const ha=p.allergies&&p.allergies!=='None'&&p.allergies!=='';return`
+          <tr style="cursor:pointer" onclick="viewPatient(${p.id})">
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="user-avatar" style="width:28px;height:28px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">${initials(p.first_name+' '+p.last_name)}</div><span class="patient-name">${p.first_name} ${p.last_name}</span></div></td>
+            <td><span class="tag">${p.smart_id}</span></td>
+            <td>${age(p.date_of_birth)} yrs · ${genderBadge(p.gender)}</td>
+            <td style="font-size:12px">${p.phone||'—'}</td>
+            <td>${ha?`<span class="badge badge-warn"><i class="fa-solid fa-triangle-exclamation"></i> ${p.allergies}</span>`:'<span class="badge badge-gray">None</span>'}</td>
+            <td style="font-size:12px">${fmtDate(p.registered_at)}</td>
+          </tr>`;}).join('')}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+</script>
+
+<script>
+// ── QUICK VITALS MODAL — from triage queue row ────────────────────────────────
+function showQuickVitalsModal(encounterId, patientName) {
+  openModal(`Record Vitals — ${patientName}`, `
+  <p style="font-size:13px;color:var(--text2);margin-bottom:16px">
+    <i class="fa-solid fa-circle-info" style="color:var(--primary)"></i>
+    Enter the vitals measured at triage. Only filled fields will be saved.
+  </p>
+  <div class="form-grid cols-3">
+    <div class="field"><label><i class="fa-solid fa-thermometer-half" style="color:var(--danger)"></i> Temperature (°C)</label><input id="qv-temp" type="number" step="0.1" placeholder="37.0" inputmode="decimal"></div>
+    <div class="field"><label><i class="fa-solid fa-heart" style="color:var(--danger)"></i> Pulse (bpm)</label><input id="qv-pulse" type="number" placeholder="80" inputmode="numeric"></div>
+    <div class="field"><label><i class="fa-solid fa-gauge" style="color:var(--primary)"></i> Blood Pressure</label><input id="qv-bp" placeholder="120/80"></div>
+    <div class="field"><label><i class="fa-solid fa-weight-scale" style="color:var(--accent)"></i> Weight (kg)</label><input id="qv-weight" type="number" step="0.1" placeholder="65" inputmode="decimal"></div>
+    <div class="field"><label><i class="fa-solid fa-ruler-vertical" style="color:var(--accent)"></i> Height (cm)</label><input id="qv-height" type="number" placeholder="165" inputmode="numeric"></div>
+    <div class="field"><label><i class="fa-solid fa-lungs" style="color:var(--primary)"></i> SpO₂ (%)</label><input id="qv-spo2" type="number" placeholder="98" inputmode="numeric"></div>
+  </div>`,
+  `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>
+   <button class="btn btn-accent" onclick="submitQuickVitals(${encounterId})"><i class="fa-solid fa-floppy-disk"></i> Save Vitals</button>`);
+}
+
+async function submitQuickVitals(encounterId) {
+  const payload = {
+    temperature:    document.getElementById('qv-temp').value   || null,
+    pulse:          document.getElementById('qv-pulse').value  || null,
+    blood_pressure: document.getElementById('qv-bp').value     || null,
+    weight:         document.getElementById('qv-weight').value || null,
+    height:         document.getElementById('qv-height').value || null,
+    oxygen_sat:     document.getElementById('qv-spo2').value   || null,
+  };
+  if (!Object.values(payload).some(v => v !== null && v !== '')) {
+    toast('Enter at least one vital sign', 'error'); return;
+  }
+  const res = await api(`/api/encounters/${encounterId}/vitals`, {method:'PATCH', body:JSON.stringify(payload)});
+  if (res && res.success) { closeModal(); toast('Vitals saved', 'success'); navigate('dashboard'); }
+  else { toast('Failed to save vitals', 'error'); }
+}
+
+// ── VITALS SEARCH MODAL — from action bar, no encounter ID yet ─────────────────
+function showVitalsSearchModal() {
+  openModal('Record Vitals — Find Patient', `
+  <p style="margin-bottom:14px;color:var(--text2);font-size:13px">Search for the patient you want to triage:</p>
+  <div class="search-bar" style="max-width:100%;margin-bottom:14px">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" id="vit-search" placeholder="Patient name or SmartID…" oninput="searchForVitals(this.value)">
+  </div>
+  <div id="vit-search-results"></div>`,
+  `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>`);
+}
+
+async function searchForVitals(q) {
+  if (q.length < 2) { document.getElementById('vit-search-results').innerHTML = ''; return; }
+  const patients = await api(`/api/patients?q=${encodeURIComponent(q)}`);
+  const el = document.getElementById('vit-search-results');
+  if (!el) return;
+  if (!patients || patients.length === 0) { el.innerHTML = '<p style="font-size:13px;color:var(--text3)">No patients found</p>'; return; }
+  el.innerHTML = patients.slice(0,6).map(p=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:10px">
+      <div>
+        <div style="font-weight:500;font-size:13px">${p.first_name} ${p.last_name}</div>
+        <div style="font-size:11px;color:var(--text3)">${p.smart_id} · ${age(p.date_of_birth)} yrs</div>
+        ${p.allergies&&p.allergies!=='None'&&p.allergies!==''?`<span class="badge badge-warn" style="margin-top:4px"><i class="fa-solid fa-triangle-exclamation"></i> ${p.allergies}</span>`:''}
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="startVitalsForPatient(${p.id},'${(p.first_name+' '+p.last_name).replace(/'/g,"\\'")}')">
+        <i class="fa-solid fa-heart-pulse"></i> Triage
+      </button>
+    </div>`).join('');
+}
+
+async function startVitalsForPatient(patientId, patientName) {
+  const today = new Date().toISOString().slice(0,10);
+  const res = await api('/api/encounters', {
+    method:'POST',
+    body:JSON.stringify({patient:patientId, encounter_type:'OPD', visit_date:today, chief_complaint:'Triage', facility:currentUser.facility})
+  });
+  if (res && res.success) {
+    // re-fetch dashboard to get the new encounter id
+    const d = await api('/api/dashboard');
+    if (!d) return;
+    const entry = d.todays_queue && d.todays_queue.find(e=>e.patient_id===patientId&&!e.has_vitals);
+    if (entry) { closeModal(); showQuickVitalsModal(entry.encounter_id, patientName); }
+    else { closeModal(); toast('Triage encounter created — find patient in queue to record vitals', 'success'); navigate('dashboard'); }
+  } else { toast('Could not create triage encounter', 'error'); }
+}
+
+
+async function renderPatients(q='') {
+  const patients = await api(`/api/patients?q=${encodeURIComponent(q)}`);
+  if (!patients) return;
+  document.getElementById('page-content').innerHTML = `
+  <div class="page-toolbar">
+    <div class="search-bar" style="max-width:100%">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="patient-search" placeholder="Search name, SmartID, NRC, phone…" value="${q}" oninput="debounceSearch(this.value)">
+    </div>
+    <button class="btn btn-primary" onclick="showRegisterModal()"><i class="fa-solid fa-user-plus"></i> Register Patient</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>${patients.length} patient${patients.length!==1?'s':''}</h3></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Patient</th><th>SmartID</th><th>Age / Gender</th><th>Province</th><th>Facility</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${patients.length === 0 ? `<tr><td colspan="7"><div class="empty-state"><p>No patients found</p></div></td></tr>` :
+            patients.map(p=>`
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="user-avatar" style="width:30px;height:30px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">${initials(p.first_name+' '+p.last_name)}</div>
+                  <div><div class="patient-name">${p.first_name} ${p.last_name}</div><div style="font-size:11px;color:var(--text3)">${p.phone||''}</div></div>
+                </div>
+              </td>
+              <td><span class="tag">${p.smart_id}</span></td>
+              <td>${age(p.date_of_birth)} yrs · ${genderBadge(p.gender)}</td>
+              <td>${p.province||'—'}</td>
+              <td style="font-size:12px">${p.facility||'—'}</td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td><button class="btn btn-ghost btn-sm" onclick="viewPatient(${p.id})">View →</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+let searchTimer;
+function debounceSearch(v) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => renderPatients(v), 300);
+}
+
+async function viewPatient(pid) {
+  const data = await api(`/api/patients/${pid}`);
+  if (!data) return;
+  const p = data.patient;
+  const encs = data.encounters;
+  document.getElementById('page-content').innerHTML = `
+  <div style="margin-bottom:14px">
+    <button class="btn btn-outline btn-sm" onclick="navigate('patients')"><i class="fa-solid fa-arrow-left"></i> Back to patients</button>
+  </div>
+  <div class="card mb-4">
+    <div class="patient-header">
+      <div class="patient-avatar">${initials(p.first_name+' '+p.last_name)}</div>
+      <div class="patient-meta">
+        <h2>${p.first_name} ${p.last_name}</h2>
+        <span class="smart-id">${p.smart_id}</span>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+          ${genderBadge(p.gender)}
+          <span class="badge badge-gray">${age(p.date_of_birth)} years old</span>
+          <span class="badge badge-gray">${p.blood_group||'Blood group unknown'}</span>
+          ${p.allergies && p.allergies!=='None' ? `<span class="badge badge-warn">⚠ ${p.allergies}</span>` : ''}
+        </div>
+      </div>
+      <div class="patient-actions">
+        <button class="btn btn-outline btn-sm" onclick="showEncounterModal(${p.id},'${p.first_name} ${p.last_name}')"><i class="fa-solid fa-plus"></i> New Encounter</button>
+        <button class="btn btn-ghost btn-sm" onclick="showEditPatientModal(${p.id})"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+      </div>
+    </div>
+    <div class="info-grid">
+      <div class="info-item"><div class="key">Date of Birth</div><div class="val">${fmtDate(p.date_of_birth)}</div></div>
+      <div class="info-item"><div class="key">NRC Number</div><div class="val">${p.nrc_number||'—'}</div></div>
+      <div class="info-item"><div class="key">Phone</div><div class="val">${p.phone||'—'}</div></div>
+      <div class="info-item"><div class="key">Province</div><div class="val">${p.province||'—'}</div></div>
+      <div class="info-item"><div class="key">District</div><div class="val">${p.district||'—'}</div></div>
+      <div class="info-item"><div class="key">Facility</div><div class="val">${p.facility||'—'}</div></div>
+      <div class="info-item"><div class="key">Address</div><div class="val">${p.address||'—'}</div></div>
+      <div class="info-item"><div class="key">Next of Kin</div><div class="val">${p.next_of_kin||'—'}</div></div>
+      <div class="info-item"><div class="key">NOK Phone</div><div class="val">${p.next_of_kin_phone||'—'}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <h3>Clinical encounters (${encs.length})</h3>
+      <button class="btn btn-primary btn-sm" onclick="showEncounterModal(${p.id},'${p.first_name} ${p.last_name}')"><i class="fa-solid fa-plus"></i> New Encounter</button>
+    </div>
+    <div class="card-body" style="padding:12px 14px">
+      ${encs.length === 0 ? `<div class="empty-state"><p>No encounters recorded yet</p></div>` :
+        encs.map((e,i)=>`
+        <div class="enc-card">
+          <div class="enc-header" onclick="toggleEnc(this)">
+            <div class="enc-header-left">
+              ${encTypeBadge(e.encounter_type)}
+              <span style="font-weight:500;font-size:13px">${e.diagnosis||e.chief_complaint||'Encounter'}</span>
+              ${e.diagnosis_code ? `<span class="tag">${e.diagnosis_code}</span>` : ''}
+            </div>
+            <div class="enc-header-right">
+              <span style="font-size:12px;color:var(--text3)">${fmtDate(e.visit_date)}</span>
+              <i class="fa-solid fa-chevron-down chevron" style="font-size:12px;color:var(--text3);transition:transform .2s"></i>
+            </div>
+          </div>
+          <div class="enc-body ${i===0?'open':''}">
+            ${e.temperature||e.pulse||e.blood_pressure ? `
+            <div class="vitals-row">
+              ${e.temperature ? `<div class="vital"><div class="v-label">Temp</div><div class="v-val">${e.temperature}°</div><div class="v-unit">°C</div></div>` : ''}
+              ${e.pulse ? `<div class="vital"><div class="v-label">Pulse</div><div class="v-val">${e.pulse}</div><div class="v-unit">bpm</div></div>` : ''}
+              ${e.blood_pressure ? `<div class="vital"><div class="v-label">BP</div><div class="v-val">${e.blood_pressure}</div><div class="v-unit">mmHg</div></div>` : ''}
+              ${e.weight ? `<div class="vital"><div class="v-label">Weight</div><div class="v-val">${e.weight}</div><div class="v-unit">kg</div></div>` : ''}
+              ${e.oxygen_sat ? `<div class="vital"><div class="v-label">SpO₂</div><div class="v-val">${e.oxygen_sat}%</div><div class="v-unit"></div></div>` : ''}
+            </div>` : ''}
+            <div class="enc-detail-grid" style="padding:12px 0">
+              ${e.chief_complaint ? `<div class="enc-detail"><div class="key">Chief complaint</div><div class="val">${e.chief_complaint}</div></div>` : ''}
+              ${e.diagnosis ? `<div class="enc-detail"><div class="key">Diagnosis</div><div class="val">${e.diagnosis}</div></div>` : ''}
+              ${e.treatment ? `<div class="enc-detail"><div class="key">Treatment plan</div><div class="val">${e.treatment}</div></div>` : ''}
+              ${e.medications ? `<div class="enc-detail"><div class="key">Medications</div><div class="val">${e.medications}</div></div>` : ''}
+              ${e.notes ? `<div class="enc-detail"><div class="key">Clinical notes</div><div class="val">${e.notes}</div></div>` : ''}
+              ${e.follow_up_date ? `<div class="enc-detail"><div class="key">Follow-up</div><div class="val">${fmtDate(e.follow_up_date)}</div></div>` : ''}
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function toggleEnc(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  body.classList.toggle('open');
+  chevron.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : '';
+}
+</script>
+
+<script>
+// ── REGISTER / EDIT PATIENT MODAL ─────────────────────────────────────────────
+function showRegisterModal(prefill={}) {
+  const provinces = ['Lusaka','Copperbelt','Central','Eastern','Luapula','Muchinga','North-Western','Northern','Southern','Western'];
+  openModal('Register New Patient', `
+  <div class="form-grid">
+    <div class="field"><label>First Name *</label><input id="rf-first" value="${prefill.first_name||''}" placeholder="First name"></div>
+    <div class="field"><label>Last Name *</label><input id="rf-last" value="${prefill.last_name||''}" placeholder="Last name"></div>
+    <div class="field"><label>Date of Birth *</label><input id="rf-dob" type="date" value="${prefill.date_of_birth||''}"></div>
+    <div class="field"><label>Gender *</label>
+      <select id="rf-gender"><option>Male</option><option>Female</option><option>Other</option></select>
+    </div>
+    <div class="field"><label>NRC Number</label><input id="rf-nrc" placeholder="123456/78/1" value="${prefill.nrc_number||''}"></div>
+    <div class="field"><label>Phone</label><input id="rf-phone" type="tel" placeholder="+260 97 1234567" value="${prefill.phone||''}"></div>
+    <div class="section-divider"><h4>Location & Facility</h4></div>
+    <div class="field"><label>Province</label>
+      <select id="rf-province">${provinces.map(p=>`<option ${p===prefill.province?'selected':''}>${p}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>District</label><input id="rf-district" placeholder="e.g. Lusaka District" value="${prefill.district||''}"></div>
+    <div class="field span-2"><label>Address</label><input id="rf-address" placeholder="Plot / Street / Area" value="${prefill.address||''}"></div>
+    <div class="field span-2"><label>Facility</label><input id="rf-facility" placeholder="Health facility name" value="${prefill.facility||currentUser.facility||''}"></div>
+    <div class="section-divider"><h4>Clinical Info</h4></div>
+    <div class="field"><label>Blood Group</label>
+      <select id="rf-blood"><option value="">Unknown</option>${['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(b=>`<option ${b===prefill.blood_group?'selected':''}>${b}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Known Allergies</label><input id="rf-allergy" placeholder="e.g. Penicillin, or None" value="${prefill.allergies||''}"></div>
+    <div class="section-divider"><h4>Next of Kin</h4></div>
+    <div class="field"><label>Name</label><input id="rf-kin" placeholder="Full name" value="${prefill.next_of_kin||''}"></div>
+    <div class="field"><label>Phone</label><input id="rf-kin-phone" type="tel" placeholder="+260 97…" value="${prefill.next_of_kin_phone||''}"></div>
+  </div>`,
+  `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>
+   <button class="btn btn-primary" onclick="submitRegister()"><i class="fa-solid fa-user-plus"></i> Register Patient</button>`);
+}
+
+async function submitRegister() {
+  const d = {
+    first_name: document.getElementById('rf-first').value.trim(),
+    last_name: document.getElementById('rf-last').value.trim(),
+    date_of_birth: document.getElementById('rf-dob').value,
+    gender: document.getElementById('rf-gender').value,
+    nrc_number: document.getElementById('rf-nrc').value.trim(),
+    phone: document.getElementById('rf-phone').value.trim(),
+    province: document.getElementById('rf-province').value,
+    district: document.getElementById('rf-district').value.trim(),
+    address: document.getElementById('rf-address').value.trim(),
+    facility: document.getElementById('rf-facility').value.trim(),
+    blood_group: document.getElementById('rf-blood').value,
+    allergies: document.getElementById('rf-allergy').value.trim(),
+    next_of_kin: document.getElementById('rf-kin').value.trim(),
+    next_of_kin_phone: document.getElementById('rf-kin-phone').value.trim(),
+  };
+  if (!d.first_name || !d.last_name || !d.date_of_birth) { toast('Please fill in required fields (name, DOB)', 'error'); return; }
+  const res = await api('/api/patients', {method:'POST', body:JSON.stringify(d)});
+  if (res && res.success) {
+    closeModal(); toast(`Patient registered — SmartID: ${res.smart_id}`, 'success'); navigate('patients');
+  } else { toast(res?.error || 'Registration failed', 'error'); }
+}
+
+async function showEditPatientModal(pid) {
+  const data = await api(`/api/patients/${pid}`);
+  if (!data) return;
+  showRegisterModal(data.patient);
+  document.getElementById('modal-title').textContent = 'Edit Patient';
+  document.getElementById('modal-footer').innerHTML =
+    `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>
+     <button class="btn btn-primary" onclick="submitEditPatient(${pid})"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>`;
+}
+
+async function submitEditPatient(pid) {
+  const d = {
+    first_name: document.getElementById('rf-first').value.trim(),
+    last_name: document.getElementById('rf-last').value.trim(),
+    date_of_birth: document.getElementById('rf-dob').value,
+    gender: document.getElementById('rf-gender').value,
+    nrc_number: document.getElementById('rf-nrc').value.trim(),
+    phone: document.getElementById('rf-phone').value.trim(),
+    province: document.getElementById('rf-province').value,
+    district: document.getElementById('rf-district').value.trim(),
+    address: document.getElementById('rf-address').value.trim(),
+    facility: document.getElementById('rf-facility').value.trim(),
+    blood_group: document.getElementById('rf-blood').value,
+    allergies: document.getElementById('rf-allergy').value.trim(),
+    next_of_kin: document.getElementById('rf-kin').value.trim(),
+    next_of_kin_phone: document.getElementById('rf-kin-phone').value.trim(),
+  };
+  const res = await api(`/api/patients/${pid}`, {method:'PUT', body:JSON.stringify(d)});
+  if (res && res.success) { closeModal(); toast('Patient updated', 'success'); viewPatient(pid); }
+  else { toast('Update failed', 'error'); }
+}
+
+// ── ENCOUNTERS ────────────────────────────────────────────────────────────────
+async function renderEncounters() {
+  const data = await api('/api/dashboard');
+  if (!data) return;
+  document.getElementById('page-content').innerHTML = `
+  <div class="page-toolbar">
+    <h3 class="section-title" style="margin:0">All clinical encounters</h3>
+    <button class="btn btn-primary" onclick="showEncounterModalSearch()"><i class="fa-solid fa-plus"></i> New Encounter</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Patient</th><th>SmartID</th><th>Type</th><th>Diagnosis</th><th>Date</th><th>Facility</th></tr></thead>
+        <tbody>
+          ${data.recent_encounters.map(e=>`
+          <tr>
+            <td class="patient-name">${e.patient_name}</td>
+            <td><span class="tag">${e.smart_id}</span></td>
+            <td>${encTypeBadge(e.encounter_type)}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.diagnosis||e.chief_complaint||'—'}</td>
+            <td>${fmtDate(e.visit_date)}</td>
+            <td style="font-size:12px">${e.facility||'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function showEncounterModalSearch() {
+  openModal('New Clinical Encounter', `
+    <p style="margin-bottom:14px;color:var(--text2);font-size:13px">Search for the patient first:</p>
+    <div class="search-bar" style="max-width:100%;margin-bottom:14px">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="enc-search" placeholder="Patient name or SmartID…" oninput="searchForEnc(this.value)">
+    </div>
+    <div id="enc-search-results"></div>`,
+  `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>`);
+}
+
+async function searchForEnc(q) {
+  if (q.length < 2) { document.getElementById('enc-search-results').innerHTML = ''; return; }
+  const patients = await api(`/api/patients?q=${encodeURIComponent(q)}`);
+  const el = document.getElementById('enc-search-results');
+  if (!el) return;
+  if (!patients || patients.length === 0) { el.innerHTML = '<p style="font-size:13px;color:var(--text3)">No patients found</p>'; return; }
+  el.innerHTML = patients.slice(0,5).map(p=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:10px">
+      <div>
+        <div style="font-weight:500;font-size:13px">${p.first_name} ${p.last_name}</div>
+        <div style="font-size:11px;color:var(--text3)">${p.smart_id} · ${age(p.date_of_birth)} yrs</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="showEncounterModal(${p.id},'${p.first_name} ${p.last_name}')">Select →</button>
+    </div>`).join('');
+}
+
+function showEncounterModal(patientId, patientName) {
+  const today = new Date().toISOString().slice(0,10);
+  openModal(`New Encounter — ${patientName}`, `
+  <div class="form-grid">
+    <div class="field"><label>Encounter Type *</label>
+      <select id="ef-type"><option>OPD</option><option>ART Clinic</option><option>MCH</option><option>TB Clinic</option><option>Inpatient</option><option>Emergency</option></select>
+    </div>
+    <div class="field"><label>Visit Date *</label><input id="ef-date" type="date" value="${today}"></div>
+    <div class="field span-2"><label>Chief Complaint</label><input id="ef-complaint" placeholder="Main reason for visit"></div>
+    <div class="section-divider"><h4>Vitals</h4></div>
+    <div class="field"><label>Temperature (°C)</label><input id="ef-temp" type="number" step="0.1" placeholder="37.0" inputmode="decimal"></div>
+    <div class="field"><label>Pulse (bpm)</label><input id="ef-pulse" type="number" placeholder="80" inputmode="numeric"></div>
+    <div class="field"><label>Blood Pressure</label><input id="ef-bp" placeholder="120/80"></div>
+    <div class="field"><label>Weight (kg)</label><input id="ef-weight" type="number" step="0.1" placeholder="70" inputmode="decimal"></div>
+    <div class="field"><label>Height (cm)</label><input id="ef-height" type="number" placeholder="170" inputmode="numeric"></div>
+    <div class="field"><label>SpO₂ (%)</label><input id="ef-spo2" type="number" placeholder="98" inputmode="numeric"></div>
+    <div class="section-divider"><h4>Clinical Assessment</h4></div>
+    <div class="field"><label>Diagnosis</label><input id="ef-diag" placeholder="e.g. Malaria (confirmed)"></div>
+    <div class="field"><label>ICD-10 Code</label><input id="ef-code" placeholder="e.g. B54"></div>
+    <div class="field span-2"><label>Treatment Plan</label><input id="ef-treatment" placeholder="Treatment or management plan"></div>
+    <div class="field span-2"><label>Medications Prescribed</label><textarea id="ef-meds" placeholder="Drug name, dose, frequency, duration…"></textarea></div>
+    <div class="field span-2"><label>Clinical Notes</label><textarea id="ef-notes" placeholder="Additional notes, referrals, observations…"></textarea></div>
+    <div class="field"><label>Follow-up Date</label><input id="ef-followup" type="date"></div>
+    <div class="field"><label>Facility</label><input id="ef-facility" value="${currentUser.facility}"></div>
+  </div>`,
+  `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>
+   <button class="btn btn-accent" onclick="submitEncounter(${patientId})"><i class="fa-solid fa-floppy-disk"></i> Save Encounter</button>`);
+}
+
+async function submitEncounter(patientId) {
+  const d = {
+    patient: patientId,
+    encounter_type: document.getElementById('ef-type').value,
+    visit_date: document.getElementById('ef-date').value,
+    chief_complaint: document.getElementById('ef-complaint').value,
+    temperature: document.getElementById('ef-temp').value || null,
+    pulse: document.getElementById('ef-pulse').value || null,
+    blood_pressure: document.getElementById('ef-bp').value,
+    weight: document.getElementById('ef-weight').value || null,
+    height: document.getElementById('ef-height').value || null,
+    oxygen_sat: document.getElementById('ef-spo2').value || null,
+    diagnosis: document.getElementById('ef-diag').value,
+    diagnosis_code: document.getElementById('ef-code').value,
+    treatment: document.getElementById('ef-treatment').value,
+    medications: document.getElementById('ef-meds').value,
+    notes: document.getElementById('ef-notes').value,
+    follow_up_date: document.getElementById('ef-followup').value || null,
+    facility: document.getElementById('ef-facility').value,
+  };
+  if (!d.visit_date) { toast('Visit date is required', 'error'); return; }
+  const res = await api('/api/encounters', {method:'POST', body:JSON.stringify(d)});
+  if (res && res.success) { closeModal(); toast('Encounter saved successfully', 'success'); viewPatient(patientId); }
+  else { toast('Failed to save encounter', 'error'); }
+}
+</script>
+
+<script>
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+async function renderReports() {
+  const d = await api('/api/dashboard');
+  if (!d) return;
+  const s = d.stats;
+  document.getElementById('page-content').innerHTML = `
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="card-header"><h3>System summary</h3></div>
+      <div class="card-body">
+        <table style="width:100%">
+          <tbody>
+            ${[['Total registered patients',s.total_patients],['Total clinical encounters',s.total_encounters],['Encounters this month',s.monthly_encounters],['Encounters today',s.today_encounters]].map(([k,v])=>`
+            <tr>
+              <td style="padding:9px 0;border-bottom:1px solid var(--border);color:var(--text2);font-size:13px">${k}</td>
+              <td style="padding:9px 0;border-bottom:1px solid var(--border);font-weight:600;font-size:15px;color:var(--primary);text-align:right">${v}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Encounter types breakdown</h3></div>
+      <div class="card-body">
+        <div class="bar-chart">
+          ${d.enc_types.map(e=>`<div class="bar-row"><div class="bar-label">${e.encounter_type}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((e.cnt/Math.max(...d.enc_types.map(x=>x.cnt),1))*100)}%"></div></div><div class="bar-val">${e.cnt}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid-2 mb-4">
+    <div class="card">
+      <div class="card-header"><h3>Patients by province</h3></div>
+      <div class="card-body">
+        <div class="bar-chart">
+          ${d.province_dist.map(p=>`<div class="bar-row"><div class="bar-label">${p.province||'Unknown'}</div><div class="bar-track"><div class="bar-fill accent" style="width:${Math.round((p.cnt/Math.max(...d.province_dist.map(x=>x.cnt),1))*100)}%"></div></div><div class="bar-val">${p.cnt}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Top 5 diagnoses</h3></div>
+      <div class="card-body">
+        <div class="bar-chart">
+          ${d.top_diagnoses.map(x=>`<div class="bar-row"><div class="bar-label">${x.diagnosis}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round((x.cnt/Math.max(...d.top_diagnoses.map(y=>y.cnt),1))*100)}%"></div></div><div class="bar-val">${x.cnt}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>Monthly encounter trend</h3></div>
+    <div class="card-body">
+      <div style="display:flex;align-items:flex-end;gap:12px;height:100px;padding-bottom:8px">
+        ${d.monthly_trend.map(m=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:11px;color:var(--text3)">${m.cnt}</span>
+          <div style="width:100%;background:var(--primary);border-radius:4px 4px 0 0;height:${Math.max(4,Math.round((m.cnt/Math.max(...d.monthly_trend.map(x=>x.cnt),1))*80))}px"></div>
+          <span style="font-size:10px;color:var(--text3)">${m.month.slice(5)}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── USERS ─────────────────────────────────────────────────────────────────────
+async function renderUsers() {
+  const users = await api('/api/users');
+  if (!users) return;
+  const isAdmin = currentUser.role === 'admin';
+  document.getElementById('page-content').innerHTML = `
+  <div class="page-toolbar">
+    <div></div>
+    ${isAdmin ? `<button class="btn btn-primary" onclick="showAddUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>` : ''}
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>${users.length} system users</h3></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Facility</th><th>Joined</th></tr></thead>
+        <tbody>
+          ${users.map(u=>`
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="user-avatar" style="width:30px;height:30px;font-size:11px;background:var(--primary-ghost);color:var(--primary)">${initials(u.name)}</div><span class="patient-name">${u.name}</span></div></td>
+            <td style="font-family:'DM Mono',monospace;font-size:12px">${u.username}</td>
+            <td>${roleBadge(u.role)}</td>
+            <td style="font-size:12px">${u.facility||'—'}</td>
+            <td>${fmtDate(u.created_at)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function roleBadge(r) {
+  const m = {doctor:'badge-blue',nurse:'badge-green',admin:'badge-warn'};
+  return `<span class="badge ${m[r]||'badge-gray'}">${r}</span>`;
+}
+
+function showAddUserModal() {
+  openModal('Add New User', `
+  <div class="form-grid">
+    <div class="field span-2"><label>Full Name *</label><input id="uf-name" placeholder="Full name" autocomplete="off"></div>
+    <div class="field"><label>Username *</label><input id="uf-user" placeholder="Login username" autocomplete="off"></div>
+    <div class="field"><label>Password *</label><input id="uf-pass" type="password" placeholder="Password"></div>
+    <div class="field"><label>Role *</label><select id="uf-role"><option>doctor</option><option>nurse</option><option>admin</option></select></div>
+    <div class="field"><label>Facility</label><input id="uf-facility" value="${currentUser.facility}"></div>
+  </div>`,
+  `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>
+   <button class="btn btn-primary" onclick="submitAddUser()"><i class="fa-solid fa-user-plus"></i> Create User</button>`);
+}
+
+async function submitAddUser() {
+  const d = {
+    name: document.getElementById('uf-name').value.trim(),
+    username: document.getElementById('uf-user').value.trim(),
+    password: document.getElementById('uf-pass').value,
+    role: document.getElementById('uf-role').value,
+    facility: document.getElementById('uf-facility').value.trim(),
+  };
+  if (!d.name || !d.username || !d.password) { toast('All fields required', 'error'); return; }
+  const res = await api('/api/users', {method:'POST', body:JSON.stringify(d)});
+  if (res && res.success) { closeModal(); toast('User created', 'success'); navigate('users'); }
+  else { toast(res?.error || 'Failed', 'error'); }
+}
+
+// ── router & init ─────────────────────────────────────────────────────────────
+const pages_map = {
+  dashboard: renderDashboard,
+  patients: () => renderPatients(),
+  encounters: renderEncounters,
+  reports: renderReports,
+  users: renderUsers
+};
+
+if (token && currentUser) { showApp(); }
+else { document.getElementById('login-screen').style.display = 'flex'; }
+</script>
+</body>
+</html>

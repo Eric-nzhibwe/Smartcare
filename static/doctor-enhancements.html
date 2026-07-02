@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome Doctor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surface:#fff;--surface2:#f7f9fc;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --primary:#0f4c81;--primary-light:#1a69b3;--primary-ghost:#e8f0fb;
+  --accent:#00a878;--accent-light:#e6f7f3;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --warn:#d97706;--warn-light:#fffbeb;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.1);
+  --sidebar-w:224px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+</style>
+<style>
+/* layout */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);background:var(--primary);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo h1{font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px}
+.sidebar-logo p{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-user{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.user-info p{font-size:12px;font-weight:500;color:#fff;line-height:1.3}
+.user-info span{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.4px}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section{padding:14px 18px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:rgba(255,255,255,.3)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;font-weight:400;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.07)}
+.nav-item.active{color:#fff;background:rgba(255,255,255,.13);border-left-color:var(--accent);font-weight:500}
+.nav-item i{width:16px;font-size:14px;text-align:center;flex-shrink:0;opacity:.8}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1)}
+.logout-btn{width:100%;padding:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-sm);color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;font-family:inherit}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.topbar h2{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.page{flex:1;overflow-y:auto;padding:20px}
+</style>
+<style>
+/* shared components */
+.dash-banner{display:flex;align-items:center;gap:16px;background:#fff;border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow);flex-wrap:wrap}
+.dash-banner__icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:var(--primary-ghost);color:var(--primary)}
+.dash-banner__body{flex:1;min-width:0}
+.dash-banner__name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.dash-banner__meta{font-size:12px;color:var(--text3);margin-top:2px}
+.dash-banner__actions{display:flex;gap:8px;flex-wrap:wrap}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-card .label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-card .value{font-size:26px;font-weight:600;color:var(--text);line-height:1;letter-spacing:-.5px}
+.stat-card .sub{font-size:11px;color:var(--text3);margin-top:4px}
+.stat-card.accent{border-left:3px solid var(--accent)}
+.stat-card.primary{border-left:3px solid var(--primary)}
+.stat-card.warn{border-left:3px solid var(--warn)}
+.stat-card.danger{border-left:3px solid var(--danger)}
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.card--danger-border{border-left:3px solid var(--danger)}
+.card--warn-border{border-left:3px solid var(--warn)}
+.card--accent-border{border-left:3px solid var(--accent)}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-header h3{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:16px 18px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.mb-4{margin-bottom:16px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbfc}
+.patient-name{font-weight:500;color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-green{background:var(--accent-light);color:#065f46}
+.badge-blue{background:var(--primary-ghost);color:var(--primary)}
+.badge-warn{background:var(--warn-light);color:#92400e}
+.badge-red{background:var(--danger-light);color:var(--danger)}
+.badge-gray{background:#f1f5f9;color:var(--text3)}
+.badge-purple{background:#f3f0ff;color:#6d28d9}
+.tag{display:inline-block;background:var(--primary-ghost);color:var(--primary);font-size:11px;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace}
+.btn{padding:9px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-light)}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#00956a}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}.btn-outline:hover{background:var(--surface2)}
+.btn-ghost{background:transparent;color:var(--primary);border:none;padding:6px 10px;font-size:12px}.btn-ghost:hover{background:var(--primary-ghost)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.search-bar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;flex:1}
+.search-bar input{border:none;outline:none;font-size:13px;flex:1;background:transparent;color:var(--text)}
+.search-bar i{color:var(--text3);flex-shrink:0;font-size:13px}
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:12px;color:var(--text2);width:120px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:var(--primary);transition:width .5s ease}
+.bar-fill.accent{background:var(--accent)}
+.bar-fill.warn{background:var(--warn)}
+.bar-val{font-size:11px;color:var(--text3);width:28px;text-align:right;flex-shrink:0}
+.empty-state{text-align:center;padding:36px;color:var(--text3);font-size:13px}
+.section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px}
+</style>
+<style>
+/* ── DOCTOR-SPECIFIC ENHANCEMENTS ── */
+
+/* Quick Search panel */
+.quick-search-wrap{position:relative;flex:1;max-width:340px}
+.quick-search-input{width:100%;padding:9px 12px 9px 36px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;background:#fff}
+.quick-search-input:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(26,105,179,.1)}
+.quick-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.quick-search-results{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-md);z-index:100;max-height:320px;overflow-y:auto;display:none}
+.quick-search-results.open{display:block}
+.qsr-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.qsr-item:last-child{border-bottom:none}
+.qsr-item:hover{background:var(--bg)}
+.qsr-avatar{width:30px;height:30px;border-radius:50%;background:var(--primary-ghost);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.qsr-body{flex:1;min-width:0}
+.qsr-name{font-size:13px;font-weight:500;color:var(--text)}
+.qsr-meta{font-size:11px;color:var(--text3)}
+.qsr-actions{display:flex;gap:6px}
+
+/* Risk/complexity indicators */
+.risk-high{background:#fef2f2;border-left:3px solid var(--danger)}
+.risk-med{background:#fffbeb;border-left:3px solid var(--warn)}
+.risk-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.risk-badge.high{background:var(--danger-light);color:var(--danger)}
+.risk-badge.med{background:var(--warn-light);color:#92400e}
+.risk-badge.low{background:var(--accent-light);color:#065f46}
+.complexity-dots{display:flex;gap:3px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border2)}
+.dot.filled-danger{background:var(--danger)}
+.dot.filled-warn{background:var(--warn)}
+.dot.filled-accent{background:var(--accent)}
+
+/* Today's schedule */
+.schedule-slot{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.schedule-slot:last-child{border-bottom:none}
+.schedule-slot:hover{background:var(--bg)}
+.slot-time{font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);width:52px;flex-shrink:0;text-align:right}
+.slot-line{width:2px;height:36px;border-radius:2px;flex-shrink:0}
+.slot-line.done{background:var(--accent)}
+.slot-line.now{background:var(--warn)}
+.slot-line.upcoming{background:var(--border2)}
+.slot-body{flex:1;min-width:0}
+.slot-patient{font-size:13px;font-weight:500;color:var(--text)}
+.slot-detail{font-size:11px;color:var(--text3);margin-top:1px}
+.slot-status{flex-shrink:0}
+
+/* Diagnosis trend (sparklines) */
+.diag-trend-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.diag-trend-row:last-child{border-bottom:none}
+.diag-name{font-size:12px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sparkline{display:flex;align-items:flex-end;gap:2px;height:24px;flex-shrink:0}
+.spark-bar{width:6px;border-radius:2px 2px 0 0;background:var(--primary);opacity:.6}
+.spark-bar.peak{opacity:1;background:var(--accent)}
+.diag-cnt{font-size:12px;font-weight:600;color:var(--text);width:28px;text-align:right;flex-shrink:0}
+.diag-trend-arrow{font-size:11px;flex-shrink:0;width:20px;text-align:center}
+
+/* Activity feed */
+.activity-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px}
+.ai-encounter{background:var(--primary-ghost);color:var(--primary)}
+.ai-vitals{background:var(--accent-light);color:var(--accent)}
+.ai-followup{background:var(--warn-light);color:var(--warn)}
+.ai-register{background:#f3f0ff;color:#6d28d9}
+.activity-body{flex:1;min-width:0}
+.activity-text{font-size:13px;color:var(--text2);line-height:1.4}
+.activity-text strong{color:var(--text)}
+.activity-time{font-size:11px;color:var(--text3);margin-top:2px}
+</style>
+<style>
+/* responsive */
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){
+  .sidebar{display:none}.stats-grid{grid-template-columns:1fr 1fr}
+  .grid-2,.grid-3{grid-template-columns:1fr}.page{padding:14px}
+}
+/* login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f4c81 0%,#1a69b3 50%,#00a878 100%);padding:16px}
+.login-card{background:#fff;border-radius:16px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo h1{font-size:22px;font-weight:600;color:var(--primary);letter-spacing:-.3px}
+.login-logo p{font-size:12px;color:var(--text3);margin-top:2px}
+.login-logo .cross{font-size:36px;margin-bottom:8px}
+.demo-accounts{background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2)}
+.demo-accounts strong{display:block;margin-bottom:6px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.demo-row{display:flex;gap:8px;flex-wrap:wrap}
+.demo-chip{background:#fff;border:1px solid var(--border2);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s;font-size:11px}
+.demo-chip:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.l-err{color:var(--danger);font-size:12px;margin-top:8px;display:none}
+#app-shell{display:none;height:100vh;flex-direction:row;overflow:hidden}
+/* notice banner */
+.notice{display:flex;align-items:center;gap:10px;background:var(--primary-ghost);border:1px solid #b8d0f0;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:20px;font-size:13px;color:var(--primary)}
+.notice i{flex-shrink:0}
+/* trend chart (CSS bars) */
+.trend-chart-wrap{display:flex;flex-direction:column;gap:4px}
+.trend-months{display:flex;gap:6px;height:80px;align-items:flex-end;padding:0 2px}
+.t-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.t-bar{width:100%;border-radius:3px 3px 0 0;position:relative;cursor:default}
+.t-bar.primary-bar{background:var(--primary);opacity:.75}
+.t-bar.primary-bar:hover{opacity:1}
+.t-bar.accent-bar{background:var(--accent);opacity:.8}
+.t-label{font-size:10px;color:var(--text3);text-align:center}
+.trend-legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.tl-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
+.tl-dot{width:8px;height:8px;border-radius:2px}
+</style>
+<body>
+
+<!-- ═══════ LOGIN SCREEN ═══════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross"><i class="fa-solid fa-hospital" style="color:var(--primary)"></i></div>
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Republic of Zambia</p>
+    </div>
+    <div class="demo-accounts">
+      <strong>Quick login</strong>
+      <div class="demo-row">
+        <div class="demo-chip" onclick="fillLogin('doctor','doctor123')"><i class="fa-solid fa-user-doctor"></i> Doctor</div>
+        <div class="demo-chip" onclick="fillLogin('doctor2','doctor123')"><i class="fa-solid fa-user-doctor"></i> Dr. Lungu</div>
+        <div class="demo-chip" onclick="fillLogin('nurse','nurse123')"><i class="fa-solid fa-user-nurse"></i> Nurse</div>
+        <div class="demo-chip" onclick="fillLogin('admin','admin123')"><i class="fa-solid fa-shield-halved"></i> Admin</div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label style="font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px"><i class="fas fa-user"></i> Username</label>
+      <input type="text" id="l-user" placeholder="Enter username" autocomplete="username"
+             style="width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:12px;font-weight:500;color:var(--text2);display:block;margin-bottom:5px"><i class="fas fa-lock"></i> Password</label>
+      <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()"
+             style="width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div class="l-err" id="l-err"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;margin-top:8px" onclick="doLogin()">
+      <i class="fa-solid fa-sign-in-alt"></i> Sign In
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ APP SHELL ═══════ -->
+<div id="app-shell" style="display:none;height:100vh;flex-direction:row;overflow:hidden">
+<div class="app" style="display:flex;width:100%;height:100%;overflow:hidden">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
+      <p>Ministry of Health · Zambia</p>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sb-avatar">?</div>
+      <div class="user-info"><p id="sb-name">Loading…</p><span id="sb-role">—</span></div>
+    </div>
+    <nav>
+      <div class="nav-section">Main</div>
+      <div class="nav-item active"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      <div class="nav-item"><i class="fa-solid fa-users"></i> Patients</div>
+      <div class="nav-item"><i class="fa-solid fa-stethoscope"></i> Encounters</div>
+      <div class="nav-section">Tools</div>
+      <div class="nav-item"><i class="fa-solid fa-chart-bar"></i> Reports</div>
+      <div class="nav-item"><i class="fa-solid fa-calendar-days"></i> Schedule</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
+    </div>
+  </div><!-- /sidebar -->
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+        <h2><i class="fa-solid fa-user-doctor" style="color:var(--primary);margin-right:4px"></i> Doctor Dashboard</h2>
+      </div>
+      <!-- QUICK SEARCH — lives in the topbar for instant access -->
+      <div class="quick-search-wrap" id="qsWrap">
+        <i class="fa-solid fa-magnifying-glass quick-search-icon"></i>
+        <input class="quick-search-input" id="quickSearch" type="text"
+               placeholder="Quick patient search…"
+               autocomplete="off"
+               oninput="handleQuickSearch(this.value)"
+               onfocus="openQS()" />
+        <div class="quick-search-results" id="qsResults"></div>
+      </div>
+      <div class="topbar-right">
+        <span id="tb-facility" style="font-size:12px;color:var(--text3)"></span>
+        <div class="user-avatar" id="tb-user-avatar" style="background:var(--primary-ghost);color:var(--primary);font-size:12px">?</div>
+      </div>
+    </div>
+
+    <div class="page" id="page">
+
+      <!-- NOTICE -->
+      <div class="notice">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>This is a <strong>prototype preview</strong> of the proposed Doctor Dashboard enhancements — Quick Search, Risk Indicators, Today's Schedule, Diagnosis Trends, and Activity Feed. All data is illustrative.</span>
+      </div>
+
+      <!-- BANNER -->
+      <div class="dash-banner">
+        <div class="dash-banner__icon"><i class="fa-solid fa-user-doctor"></i></div>
+        <div class="dash-banner__body">
+          <div class="dash-banner__name" id="banner-name">Loading…</div>
+          <div class="dash-banner__meta" id="banner-meta">—</div>
+        </div>
+        <div class="dash-banner__actions">
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-stethoscope"></i> New Encounter</button>
+          <button class="btn btn-outline btn-sm"><i class="fa-solid fa-users"></i> Patients</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="label"><i class="fa-solid fa-users fa-fw"></i> My Patients</div>
+          <div class="value" id="stat-patients">—</div>
+          <div class="sub">Patients I have seen</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="label"><i class="fa-solid fa-stethoscope fa-fw"></i> My Encounters</div>
+          <div class="value" id="stat-encounters">—</div>
+          <div class="sub" id="sub-encounters">— today · — this month</div>
+        </div>
+        <div class="stat-card warn">
+          <div class="label"><i class="fa-solid fa-calendar-check fa-fw"></i> Upcoming Follow-ups</div>
+          <div class="value" id="stat-upcoming">—</div>
+          <div class="sub">Next 14 days</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="label"><i class="fa-solid fa-triangle-exclamation fa-fw"></i> Overdue Follow-ups</div>
+          <div class="value" id="stat-overdue">—</div>
+          <div class="sub">Past due date</div>
+        </div>
+      </div>
+
+      <!-- ROW 1: TODAY'S SCHEDULE + RISK PATIENTS -->
+      <div class="grid-2 mb-4">
+
+        <!-- TODAY'S SCHEDULE -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-calendar-day fa-fw" style="color:var(--accent)"></i> Today's Schedule</h3>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge badge-blue">8 booked</span>
+              <span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> 5 done</span>
+            </div>
+          </div>
+          <!-- schedule list -->
+          <div class="schedule-slot" onclick="">
+            <div class="slot-time">08:00</div>
+            <div class="slot-line done"></div>
+            <div class="slot-body">
+              <div class="slot-patient">Mary Banda</div>
+              <div class="slot-detail">OPD · Follow-up — Hypertension</div>
+            </div>
+            <div class="slot-status"><span class="badge badge-green">Done</span></div>
+          </div>
+          <div class="schedule-slot">
+            <div class="slot-time">08:30</div>
+            <div class="slot-line done"></div>
+            <div class="slot-body">
+              <div class="slot-patient">John Phiri</div>
+              <div class="slot-detail">OPD · New visit — Chest pain</div>
+            </div>
+            <div class="slot-status"><span class="badge badge-green">Done</span></div>
+          </div>
+          <div class="schedule-slot">
+            <div class="slot-time">09:15</div>
+            <div class="slot-line done"></div>
+            <div class="slot-body">
+              <div class="slot-patient">Grace Mutale</div>
+              <div class="slot-detail">ANC · Routine checkup</div>
+            </div>
+            <div class="slot-status"><span class="badge badge-green">Done</span></div>
+          </div>
+          <div class="schedule-slot" style="background:var(--warn-light)">
+            <div class="slot-time" style="color:var(--warn)">10:00</div>
+            <div class="slot-line now"></div>
+            <div class="slot-body">
+              <div class="slot-patient" style="color:var(--warn)">Esther Zulu</div>
+              <div class="slot-detail">OPD · Follow-up — Diabetes review</div>
+            </div>
+            <div class="slot-status"><span class="badge badge-warn"><i class="fa-solid fa-clock"></i> Now</span></div>
+          </div>
+          <div class="schedule-slot">
+            <div class="slot-time">10:45</div>
+            <div class="slot-line upcoming"></div>
+            <div class="slot-body">
+              <div class="slot-patient">Peter Nkonde</div>
+              <div class="slot-detail">OPD · New visit — Malaria symptoms</div>
+            </div>
+            <div class="slot-status"><span class="badge badge-gray">Upcoming</span></div>
+          </div>
+          <div class="schedule-slot">
+            <div class="slot-time">11:30</div>
+            <div class="slot-line upcoming"></div>
+            <div class="slot-body">
+              <div class="slot-patient">Agnes Tembo</div>
+              <div class="slot-detail">Inpatient · Ward round</div>
+            </div>
+            <div class="slot-status"><span class="badge badge-gray">Upcoming</span></div>
+          </div>
+          <div style="padding:12px 14px;text-align:center">
+            <button class="btn btn-ghost btn-sm" style="font-size:12px">View full schedule →</button>
+          </div>
+        </div>
+
+        <!-- PATIENT RISK / COMPLEXITY -->
+        <div class="card card--warn-border">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-shield-heart fa-fw" style="color:var(--warn)"></i> Patient Risk Indicators</h3>
+            <span class="badge badge-warn">4 high-risk</span>
+          </div>
+          <div class="table-wrap"><table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Risk</th>
+                <th>Flags</th>
+                <th>Complexity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="risk-high" style="cursor:pointer">
+                <td>
+                  <div class="patient-name">Mary Banda</div>
+                  <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00142</div>
+                </td>
+                <td><span class="risk-badge high"><i class="fa-solid fa-circle-exclamation"></i> High</span></td>
+                <td>
+                  <span class="badge badge-red" style="margin-bottom:3px;display:inline-flex"><i class="fa-solid fa-triangle-exclamation"></i> Penicillin allergy</span><br>
+                  <span class="badge badge-warn" style="display:inline-flex"><i class="fa-solid fa-clock"></i> 3 overdue</span>
+                </td>
+                <td>
+                  <div class="complexity-dots">
+                    <div class="dot filled-danger"></div><div class="dot filled-danger"></div><div class="dot filled-danger"></div><div class="dot"></div><div class="dot"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr class="risk-high" style="cursor:pointer">
+                <td>
+                  <div class="patient-name">Esther Zulu</div>
+                  <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00089</div>
+                </td>
+                <td><span class="risk-badge high"><i class="fa-solid fa-circle-exclamation"></i> High</span></td>
+                <td>
+                  <span class="badge badge-red" style="margin-bottom:3px;display:inline-flex"><i class="fa-solid fa-triangle-exclamation"></i> Sulfa allergy</span><br>
+                  <span class="badge badge-warn" style="display:inline-flex"><i class="fa-solid fa-clock"></i> 1 overdue</span>
+                </td>
+                <td>
+                  <div class="complexity-dots">
+                    <div class="dot filled-danger"></div><div class="dot filled-danger"></div><div class="dot filled-warn"></div><div class="dot"></div><div class="dot"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr class="risk-med" style="cursor:pointer">
+                <td>
+                  <div class="patient-name">John Phiri</div>
+                  <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00211</div>
+                </td>
+                <td><span class="risk-badge med"><i class="fa-solid fa-circle-dot"></i> Medium</span></td>
+                <td>
+                  <span class="badge badge-warn" style="display:inline-flex"><i class="fa-solid fa-clock"></i> 2 overdue</span>
+                </td>
+                <td>
+                  <div class="complexity-dots">
+                    <div class="dot filled-warn"></div><div class="dot filled-warn"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr style="cursor:pointer">
+                <td>
+                  <div class="patient-name">Grace Mutale</div>
+                  <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00057</div>
+                </td>
+                <td><span class="risk-badge med"><i class="fa-solid fa-circle-dot"></i> Medium</span></td>
+                <td>
+                  <span class="badge badge-red" style="display:inline-flex"><i class="fa-solid fa-triangle-exclamation"></i> Latex allergy</span>
+                </td>
+                <td>
+                  <div class="complexity-dots">
+                    <div class="dot filled-warn"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr style="cursor:pointer">
+                <td>
+                  <div class="patient-name">Agnes Tembo</div>
+                  <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">SC-00318</div>
+                </td>
+                <td><span class="risk-badge low"><i class="fa-solid fa-circle-check"></i> Low</span></td>
+                <td><span class="badge badge-gray">None</span></td>
+                <td>
+                  <div class="complexity-dots">
+                    <div class="dot filled-accent"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table></div>
+          <div style="padding:10px 14px;font-size:11px;color:var(--text3);border-top:1px solid var(--border)">
+            <i class="fa-solid fa-circle-info"></i> Complexity score is based on allergy flags + overdue follow-up count.
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2: DIAGNOSIS TREND + ACTIVITY FEED -->
+      <div class="grid-2 mb-4">
+
+        <!-- DIAGNOSIS TREND OVER TIME -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-disease fa-fw" style="color:var(--warn)"></i> Diagnosis Trend — Last 6 Months</h3>
+            <span class="badge badge-gray">Top 5</span>
+          </div>
+          <div class="card-body">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Sparkline shows month-by-month case count. Arrow = trend vs last month.</div>
+            <!-- Malaria -->
+            <div class="diag-trend-row">
+              <div class="diag-name">Malaria</div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:10px"></div>
+                <div class="spark-bar" style="height:14px"></div>
+                <div class="spark-bar" style="height:12px"></div>
+                <div class="spark-bar" style="height:18px"></div>
+                <div class="spark-bar" style="height:16px"></div>
+                <div class="spark-bar peak" style="height:22px"></div>
+              </div>
+              <div class="diag-trend-arrow" style="color:var(--danger)"><i class="fa-solid fa-arrow-trend-up"></i></div>
+              <div class="diag-cnt">22</div>
+            </div>
+            <!-- Hypertension -->
+            <div class="diag-trend-row">
+              <div class="diag-name">Hypertension</div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:18px"></div>
+                <div class="spark-bar peak" style="height:20px"></div>
+                <div class="spark-bar" style="height:17px"></div>
+                <div class="spark-bar" style="height:19px"></div>
+                <div class="spark-bar" style="height:18px"></div>
+                <div class="spark-bar" style="height:17px"></div>
+              </div>
+              <div class="diag-trend-arrow" style="color:var(--text3)"><i class="fa-solid fa-minus"></i></div>
+              <div class="diag-cnt">17</div>
+            </div>
+            <!-- Diabetes -->
+            <div class="diag-trend-row">
+              <div class="diag-name">Diabetes Mellitus</div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:8px"></div>
+                <div class="spark-bar" style="height:10px"></div>
+                <div class="spark-bar" style="height:9px"></div>
+                <div class="spark-bar" style="height:11px"></div>
+                <div class="spark-bar" style="height:13px"></div>
+                <div class="spark-bar peak" style="height:15px"></div>
+              </div>
+              <div class="diag-trend-arrow" style="color:var(--danger)"><i class="fa-solid fa-arrow-trend-up"></i></div>
+              <div class="diag-cnt">15</div>
+            </div>
+            <!-- RTI -->
+            <div class="diag-trend-row">
+              <div class="diag-name">Upper RTI</div>
+              <div class="sparkline">
+                <div class="spark-bar peak" style="height:16px"></div>
+                <div class="spark-bar" style="height:14px"></div>
+                <div class="spark-bar" style="height:12px"></div>
+                <div class="spark-bar" style="height:10px"></div>
+                <div class="spark-bar" style="height:9px"></div>
+                <div class="spark-bar" style="height:7px"></div>
+              </div>
+              <div class="diag-trend-arrow" style="color:var(--accent)"><i class="fa-solid fa-arrow-trend-down"></i></div>
+              <div class="diag-cnt">7</div>
+            </div>
+            <!-- TB -->
+            <div class="diag-trend-row">
+              <div class="diag-name">Pulmonary TB</div>
+              <div class="sparkline">
+                <div class="spark-bar" style="height:6px"></div>
+                <div class="spark-bar" style="height:6px"></div>
+                <div class="spark-bar" style="height:8px"></div>
+                <div class="spark-bar" style="height:6px"></div>
+                <div class="spark-bar peak" style="height:9px"></div>
+                <div class="spark-bar" style="height:7px"></div>
+              </div>
+              <div class="diag-trend-arrow" style="color:var(--text3)"><i class="fa-solid fa-minus"></i></div>
+              <div class="diag-cnt">7</div>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:14px;flex-wrap:wrap">
+              <div class="tl-item"><div class="tl-dot" style="background:var(--primary)"></div> Monthly count</div>
+              <div class="tl-item"><div class="tl-dot" style="background:var(--accent)"></div> Peak month</div>
+              <div class="tl-item"><i class="fa-solid fa-arrow-trend-up" style="font-size:10px;color:var(--danger)"></i>&nbsp;Rising</div>
+              <div class="tl-item"><i class="fa-solid fa-arrow-trend-down" style="font-size:10px;color:var(--accent)"></i>&nbsp;Declining</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVITY FEED -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-bolt fa-fw" style="color:var(--primary)"></i> My Activity Feed</h3>
+            <span class="badge badge-blue">Today</span>
+          </div>
+          <div class="card-body" style="padding-top:8px">
+            <div class="activity-item">
+              <div class="activity-icon ai-encounter"><i class="fa-solid fa-stethoscope"></i></div>
+              <div class="activity-body">
+                <div class="activity-text">Recorded encounter for <strong>Esther Zulu</strong> — Diabetes review · OPD</div>
+                <div class="activity-time"><i class="fa-regular fa-clock"></i> 09:52 today</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon ai-vitals"><i class="fa-solid fa-heart-pulse"></i></div>
+              <div class="activity-body">
+                <div class="activity-text">Updated vitals for <strong>Grace Mutale</strong> — BP 118/76, Temp 36.8°C</div>
+                <div class="activity-time"><i class="fa-regular fa-clock"></i> 09:18 today</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon ai-encounter"><i class="fa-solid fa-stethoscope"></i></div>
+              <div class="activity-body">
+                <div class="activity-text">Recorded encounter for <strong>John Phiri</strong> — Chest pain workup · OPD</div>
+                <div class="activity-time"><i class="fa-regular fa-clock"></i> 08:47 today</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon ai-followup"><i class="fa-solid fa-calendar-check"></i></div>
+              <div class="activity-body">
+                <div class="activity-text">Scheduled follow-up for <strong>Mary Banda</strong> in 14 days — BP monitoring</div>
+                <div class="activity-time"><i class="fa-regular fa-clock"></i> 08:12 today</div>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon ai-encounter"><i class="fa-solid fa-stethoscope"></i></div>
+              <div class="activity-body">
+                <div class="activity-text">Recorded encounter for <strong>Mary Banda</strong> — Hypertension follow-up · OPD</div>
+                <div class="activity-time"><i class="fa-regular fa-clock"></i> 08:03 today</div>
+              </div>
+            </div>
+            <div class="activity-item" style="border-bottom:none">
+              <div class="activity-icon ai-register"><i class="fa-solid fa-user-plus"></i></div>
+              <div class="activity-body">
+                <div class="activity-text">Registered new patient <strong>Peter Nkonde</strong> — SC-00421</div>
+                <div class="activity-time"><i class="fa-regular fa-clock"></i> Yesterday, 16:34</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:10px 14px;border-top:1px solid var(--border);text-align:center">
+            <button class="btn btn-ghost btn-sm">Load more activity →</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page -->
+  </div><!-- /main -->
+</div><!-- /app -->
+</div><!-- /app-shell -->
+
+<script>
+/* ── Auth ── */
+let token = localStorage.getItem('emr_token');
+let currentUser = JSON.parse(localStorage.getItem('emr_user') || 'null');
+
+function fillLogin(u, p) {
+  document.getElementById('l-user').value = u;
+  document.getElementById('l-pass').value = p;
+}
+
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value;
+  const err = document.getElementById('l-err');
+  err.style.display = 'none';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error || 'Invalid credentials'; err.style.display = 'block'; return; }
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('emr_token', token);
+    localStorage.setItem('emr_user', JSON.stringify(currentUser));
+    showApp();
+  } catch(e) {
+    err.textContent = 'Cannot reach server. Is the backend running?';
+    err.style.display = 'block';
+  }
+}
+
+function logout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('emr_token'); localStorage.removeItem('emr_user');
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function api(path, opts={}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: {'Content-Type':'application/json', 'Authorization':`Bearer ${token}`, ...(opts.headers||{})}
+  });
+  if (res.status === 401) { logout(); return null; }
+  return res.json();
+}
+
+async function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').style.display = 'flex';
+  // populate sidebar user
+  if (currentUser) {
+    const initials = currentUser.name.split(' ').map(w=>w[0]).slice(0,2).join('');
+    document.getElementById('sb-avatar').textContent = initials;
+    document.getElementById('sb-name').textContent = currentUser.name;
+    document.getElementById('sb-role').textContent = currentUser.role.toUpperCase();
+    document.getElementById('tb-user-avatar').textContent = initials;
+    document.getElementById('tb-facility').textContent = currentUser.facility;
+  }
+  // load live dashboard data
+  const d = await api('/api/dashboard');
+  if (d) renderLiveData(d);
+}
+
+function renderLiveData(d) {
+  // Update banner
+  document.getElementById('banner-name').textContent = d.clinician_name || currentUser.name;
+  document.getElementById('banner-meta').textContent = (d.facility || currentUser.facility) + ' · Clinical Workstation';
+  // Update stat cards
+  const s = d.stats || {};
+  setVal('stat-patients',   s.total_my_patients   ?? '—');
+  setVal('stat-encounters', s.total_my_encounters  ?? '—');
+  setVal('stat-upcoming',   s.upcoming_followups   ?? '—');
+  setVal('stat-overdue',    s.overdue_followups    ?? '—');
+  setVal('sub-encounters',  `${s.today_my_encounters??0} today · ${s.monthly_my_encounters??0} this month`);
+}
+
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// auto-login if token exists
+if (token && currentUser) { showApp(); }
+
+/* ── Quick Search ── */
+const MOCK_PATIENTS = [
+  {id:142,name:'Mary Banda',      sid:'SC-00142',age:38,gender:'Female',allergy:'Penicillin',overdue:3},
+  {id:89, name:'Esther Zulu',     sid:'SC-00089',age:52,gender:'Female',allergy:'Sulfa',      overdue:1},
+  {id:211,name:'John Phiri',      sid:'SC-00211',age:44,gender:'Male',  allergy:null,         overdue:2},
+  {id:57, name:'Grace Mutale',    sid:'SC-00057',age:29,gender:'Female',allergy:'Latex',      overdue:0},
+  {id:318,name:'Agnes Tembo',     sid:'SC-00318',age:61,gender:'Female',allergy:null,         overdue:0},
+  {id:421,name:'Peter Nkonde',    sid:'SC-00421',age:33,gender:'Male',  allergy:null,         overdue:0},
+  {id:77, name:'Emmanuel Lungu',  sid:'SC-00077',age:47,gender:'Male',  allergy:'Aspirin',    overdue:1},
+  {id:194,name:'Charity Mwansa',  sid:'SC-00194',age:25,gender:'Female',allergy:null,         overdue:0},
+];
+
+function initials(n){return n.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2)}
+
+function handleQuickSearch(val) {
+  const box = document.getElementById('qsResults');
+  if (!val || val.trim().length < 2) { box.classList.remove('open'); box.innerHTML=''; return; }
+  const q = val.toLowerCase();
+  const hits = MOCK_PATIENTS.filter(p => p.name.toLowerCase().includes(q) || p.sid.toLowerCase().includes(q));
+  if (!hits.length) {
+    box.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--text3)"><i class="fa-solid fa-magnifying-glass"></i> No patients found</div>';
+    box.classList.add('open'); return;
+  }
+  box.innerHTML = hits.map(p => `
+    <div class="qsr-item">
+      <div class="qsr-avatar">${initials(p.name)}</div>
+      <div class="qsr-body">
+        <div class="qsr-name">${p.name}</div>
+        <div class="qsr-meta">
+          ${p.sid} · ${p.age} yrs · ${p.gender}
+          ${p.allergy ? `<span class="badge badge-warn" style="margin-left:4px"><i class="fa-solid fa-triangle-exclamation"></i> ${p.allergy}</span>` : ''}
+          ${p.overdue ? `<span class="badge badge-red" style="margin-left:4px">${p.overdue} overdue</span>` : ''}
+        </div>
+      </div>
+      <div class="qsr-actions">
+        <button class="btn btn-primary btn-sm" onclick="alert('Open chart for ${p.name}')"><i class="fa-solid fa-folder-open"></i> Chart</button>
+        <button class="btn btn-outline btn-sm" onclick="alert('New encounter for ${p.name}')"><i class="fa-solid fa-stethoscope"></i></button>
+      </div>
+    </div>`).join('');
+  box.classList.add('open');
+}
+
+function openQS() {
+  const val = document.getElementById('quickSearch').value;
+  if (val && val.trim().length >= 2) document.getElementById('qsResults').classList.add('open');
+}
+
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('qsWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('qsResults').classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>
