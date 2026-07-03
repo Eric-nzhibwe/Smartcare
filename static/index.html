@@ -27,17 +27,83 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 </style>
 <style>
 /* ── login screen ── */
-#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f4c81 0%,#1a69b3 50%,#00a878 100%);padding:16px}
-.login-card{background:white;border-radius:16px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.login-logo{text-align:center;margin-bottom:24px}
-.login-logo h1{font-size:22px;font-weight:600;color:var(--primary);letter-spacing:-.3px}
-.login-logo p{font-size:12px;color:var(--text3);margin-top:2px}
-.login-logo .cross{font-size:36px;margin-bottom:8px}
-.demo-accounts{background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--text2)}
-.demo-accounts strong{display:block;margin-bottom:6px;color:var(--text);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-.demo-row{display:flex;gap:8px;flex-wrap:wrap}
-.demo-chip{background:white;border:1px solid var(--border2);border-radius:20px;padding:5px 12px;cursor:pointer;transition:all .15s;font-size:11px;touch-action:manipulation}
-.demo-chip:hover,.demo-chip:active{background:var(--primary);color:white;border-color:var(--primary)}
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport on mobile — avoids browser chrome overlap */
+  background: linear-gradient(150deg, #0f4c81 0%, #1a69b3 45%, #00a878 100%);
+  padding: 16px;
+  overflow-y: auto;
+}
+.login-card {
+  background: white;
+  border-radius: 16px;
+  padding: 32px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  /* never let the card exceed the visible area */
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.login-logo { text-align: center; margin-bottom: 22px }
+.login-logo .cross { font-size: 38px; margin-bottom: 8px; display: block }
+.login-logo h1 {
+  font-size: 22px; font-weight: 600; color: var(--primary);
+  letter-spacing: -.3px; display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+}
+.login-logo p { font-size: 12px; color: var(--text3); margin-top: 4px }
+.demo-accounts {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.demo-accounts strong {
+  display: block; margin-bottom: 8px;
+  color: var(--text); font-size: 10px;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.demo-row { display: flex; gap: 6px; flex-wrap: wrap }
+.demo-chip {
+  background: white;
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 11px;
+  font-family: inherit;
+  touch-action: manipulation;
+  /* tap target size for mobile */
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.demo-chip:hover, .demo-chip:active {
+  background: var(--primary); color: white; border-color: var(--primary);
+}
+/* Responsive login */
+@media (max-width: 480px) {
+  #login-screen { padding: 12px; align-items: flex-start; padding-top: max(24px, env(safe-area-inset-top, 16px)) }
+  .login-card { padding: 24px 20px; border-radius: 14px; max-height: none }
+  .login-logo { margin-bottom: 18px }
+  .login-logo .cross { font-size: 32px }
+  .login-logo h1 { font-size: 19px }
+  .demo-chip { font-size: 12px; padding: 7px 12px }
+  /* Full-width chips on very small screens */
+}
+@media (max-width: 360px) {
+  .demo-row { flex-direction: column }
+  .demo-chip { justify-content: center }
+}
 /* ── app shell ── */
 #app{display:none;height:100vh;flex-direction:row;overflow:hidden}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99}
@@ -234,7 +300,7 @@ textarea{resize:vertical;min-height:70px}
   .patient-header{flex-direction:column}
   .patient-actions{width:100%}
   .patient-actions .btn{flex:1;justify-content:center}
-  .login-card{padding:28px 22px}
+  .login-card{padding:24px 20px}
   .modal{max-height:95vh}
   .modal-footer{flex-direction:column}
   .modal-footer .btn{width:100%;justify-content:center}
@@ -306,24 +372,50 @@ textarea{resize:vertical;min-height:70px}
 <!-- ═══════════════════════ LOGIN ═══════════════════════ -->
 <div id="login-screen">
   <div class="login-card">
+
     <div class="login-logo">
-      <div class="cross"><i class="fa-solid fa-hospital" style="color:var(--primary)"></i></div>
+      <span class="cross"><i class="fa-solid fa-hospital" style="color:var(--primary)"></i></span>
       <h1><i class="fa-solid fa-heart-pulse"></i> SmartCare EMR</h1>
       <p>Ministry of Health · Republic of Zambia</p>
     </div>
+
+    <div class="demo-accounts">
+      <strong>Quick login</strong>
+      <div class="demo-row">
+        <button class="demo-chip" onclick="fillLogin('doctor','Doctor#2025')">
+          <i class="fa-solid fa-user-doctor"></i> Doctor
+        </button>
+        <button class="demo-chip" onclick="fillLogin('nurse','Nurse#2025')">
+          <i class="fa-solid fa-user-nurse"></i> Nurse
+        </button>
+        <button class="demo-chip" onclick="fillLogin('admin','Admin#2025')">
+          <i class="fa-solid fa-shield-halved"></i> Admin
+        </button>
+        <button class="demo-chip" onclick="fillLogin('doctor2','Doctor#2025')">
+          <i class="fa-solid fa-user-doctor"></i> Dr. Lungu
+        </button>
+      </div>
     </div>
-    <div class="field" style="margin-bottom:12px">
+
+    <div class="field" style="margin-bottom:14px">
       <label><i class="fas fa-user"></i> Username</label>
-      <input type="text" id="l-user" placeholder="Enter username" autocomplete="username">
+      <input type="text" id="l-user" placeholder="Enter username"
+             autocomplete="username" inputmode="text">
     </div>
     <div class="field" style="margin-bottom:20px">
       <label><i class="fas fa-lock"></i> Password</label>
-      <input type="password" id="l-pass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="l-pass" placeholder="Enter password"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="doLogin()">
+    <button class="btn btn-primary"
+            style="width:100%;justify-content:center;padding:13px;font-size:14px"
+            onclick="doLogin()">
       <i class="fa-solid fa-sign-in-alt"></i> Sign In
     </button>
-    <p id="l-err" style="color:var(--danger);font-size:12px;margin-top:10px;text-align:center;display:none"></p>
+    <p id="l-err" style="color:var(--danger);font-size:12px;margin-top:12px;
+                          text-align:center;display:none;line-height:1.4"></p>
+
   </div>
 </div>
 
