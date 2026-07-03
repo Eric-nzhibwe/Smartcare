@@ -233,31 +233,32 @@ function renderAdminDashboard(d) {
     </div>
   </div>`;
 
-  // Compute DQ live from available data
-  const noPhone = (d.recent_patients||[]).filter(p=>!p.phone).length;
-  const noVitals = (d.recent_encounters||[]).filter(e=>!e.temperature&&!e.pulse&&!e.blood_pressure).length;
-  const noNRC   = (d.recent_patients||[]).filter(p=>!p.nrc_number).length;
+  // Use server-aggregated DQ counts (avoids loading all patients on the client)
+  const dq      = d.data_quality || {};
+  const noPhone  = dq.no_phone  ?? 0;
+  const noVitals = dq.no_vitals ?? 0;
+  const noNRC    = dq.no_nrc    ?? 0;
 
   const dqPanel = `
   <div class="card">
     <div class="card-header">
       <h3><i class="fa-solid fa-circle-exclamation fa-fw" style="color:var(--warn)"></i> Data Quality Indicators</h3>
-      <span class="badge badge-gray">Based on recent records</span>
+      <span class="badge badge-gray">System-wide</span>
     </div>
     <div class="card-body">
       <div class="dq-issue">
         <div class="dq-icon high"><i class="fa-solid fa-phone-slash"></i></div>
         <div class="dq-body">
           <div class="dq-title">Missing phone numbers</div>
-          <div class="dq-desc">Recent patients with no contact number — affects follow-up outreach capacity.</div>
+          <div class="dq-desc">Patients with no contact number — affects follow-up outreach capacity.</div>
         </div>
         <div class="dq-count" style="color:${noPhone>0?'var(--danger)':'var(--accent)'}">${noPhone}</div>
       </div>
       <div class="dq-issue">
         <div class="dq-icon med"><i class="fa-solid fa-heart-pulse"></i></div>
         <div class="dq-body">
-          <div class="dq-title">Recent encounters with no vitals</div>
-          <div class="dq-desc">OPD/inpatient encounters where nursing triage vitals were not recorded.</div>
+          <div class="dq-title">Encounters with no vitals recorded</div>
+          <div class="dq-desc">OPD/inpatient encounters where nursing triage vitals were not entered.</div>
         </div>
         <div class="dq-count" style="color:${noVitals>0?'var(--warn)':'var(--accent)'}">${noVitals}</div>
       </div>

@@ -10,7 +10,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'smartemr-zambia-django-secret-2025-ch
 # Default to False so production is safe even if env var is missing
 DEBUG = os.environ.get('DEBUG', 'false').lower() != 'false'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# Lock down allowed hosts — never leave as bare '*' in practice
+_raw_hosts = os.environ.get('ALLOWED_HOSTS', '*' if DEBUG else '')
+ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(',') if h.strip()] or ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -22,6 +24,7 @@ INSTALLED_APPS = [
     # third-party
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',   # enables logout token invalidation
     'corsheaders',
     # local
     'emr',
@@ -68,17 +71,33 @@ DATABASES = {
     )
 }
 
-AUTH_PASSWORD_VALIDATORS = []
+# ── Password validation ───────────────────────────────────────────────────────
+# Enforces strong passwords system-wide (API + Django admin)
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Africa/Lusaka'
-USE_I18N = True
-USE_TZ = True
+TIME_ZONE     = 'Africa/Lusaka'
+USE_I18N      = True
+USE_TZ        = True
 
 # Static files — the frontend SPA lives in static/
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_URL        = '/static/'
+STATIC_ROOT       = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS  = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -97,11 +116,15 @@ REST_FRAMEWORK = {
 
 # ── JWT ───────────────────────────────────────────────────────────────────────
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=12),
+    'ACCESS_TOKEN_LIFETIME':  timedelta(hours=12),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    # Include extra claims via a custom token
+    'AUTH_HEADER_TYPES':      ('Bearer',),
+    # Custom serializer injects user payload into the login response
     'TOKEN_OBTAIN_SERIALIZER': 'emr.serializers.CustomTokenObtainPairSerializer',
+    # Rotate refresh tokens on each use and blacklist the old one
+    'ROTATE_REFRESH_TOKENS':   True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN':        True,
 }
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
@@ -117,12 +140,12 @@ CORS_ALLOWED_ORIGINS = [
 # Render terminates SSL at the load balancer — don't redirect internally,
 # but do mark cookies as secure and trust the forwarded proto header.
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = False          # Render's load balancer handles HTTPS — redirect here causes a loop
-    SILENCED_SYSTEM_CHECKS = ['security.W008']  # acknowledged: Render LB enforces SSL externally
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000       # 1 year
+    SECURE_PROXY_SSL_HEADER       = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT           = False   # Render LB handles HTTPS — redirect here causes a loop
+    SILENCED_SYSTEM_CHECKS        = ['security.W008']  # acknowledged: Render LB enforces SSL externally
+    SESSION_COOKIE_SECURE         = True
+    CSRF_COOKIE_SECURE            = True
+    SECURE_HSTS_SECONDS           = 31536000    # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_PRELOAD           = True
+    SECURE_CONTENT_TYPE_NOSNIFF   = True

@@ -257,15 +257,90 @@ async function submitEditPatient(pid) {
 }
 
 // ── ENCOUNTERS PAGE ───────────────────────────────────────
-async function renderEncounters() {
-  const data = await api('/api/dashboard');
+let _encPage = 1;
+const _encPageSize = 25;
+
+async function renderEncounters(page = 1) {
+  _encPage = page;
+  const typeFilter = document.getElementById('enc-type-filter')?.value || '';
+  const dateFrom   = document.getElementById('enc-date-from')?.value   || '';
+  const dateTo     = document.getElementById('enc-date-to')?.value     || '';
+
+  let url = `/api/encounters?page=${page}&page_size=${_encPageSize}`;
+  if (typeFilter) url += `&type=${encodeURIComponent(typeFilter)}`;
+  if (dateFrom)   url += `&from=${dateFrom}`;
+  if (dateTo)     url += `&to=${dateTo}`;
+
+  const data = await api(url);
   if (!data) return;
+
+  const { results, total, num_pages } = data;
+
+  // Build pagination controls
+  const paginationHtml = num_pages > 1 ? `
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;
+              border-top:1px solid var(--border);flex-wrap:wrap;gap:8px">
+    <span style="font-size:12px;color:var(--text3)">
+      Showing ${((page - 1) * _encPageSize) + 1}–${Math.min(page * _encPageSize, total)} of ${total}
+    </span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${page > 1
+        ? `<button class="btn btn-outline btn-sm" onclick="renderEncounters(${page - 1})">
+             <i class="fa-solid fa-chevron-left"></i> Prev
+           </button>` : ''}
+      ${Array.from({length: num_pages}, (_, i) => i + 1)
+        .filter(p => Math.abs(p - page) <= 2 || p === 1 || p === num_pages)
+        .reduce((acc, p, i, arr) => {
+          if (i > 0 && arr[i-1] !== p - 1) acc.push('…');
+          acc.push(p); return acc;
+        }, [])
+        .map(p => p === '…'
+          ? `<span style="padding:5px 4px;font-size:12px;color:var(--text3)">…</span>`
+          : `<button class="btn btn-sm ${p === page ? 'btn-primary' : 'btn-outline'}"
+               onclick="renderEncounters(${p})">${p}</button>`
+        ).join('')}
+      ${page < num_pages
+        ? `<button class="btn btn-outline btn-sm" onclick="renderEncounters(${page + 1})">
+             Next <i class="fa-solid fa-chevron-right"></i>
+           </button>` : ''}
+    </div>
+  </div>` : '';
+
   document.getElementById('page-content').innerHTML = `
   <div class="page-toolbar">
-    <h3 class="section-title" style="margin:0">Clinical Encounters</h3>
+    <h3 class="section-title" style="margin:0">Clinical Encounters
+      <span style="font-weight:400;font-size:12px;color:var(--text3);margin-left:6px">${total} total</span>
+    </h3>
     <button class="btn btn-primary" onclick="showEncounterModalSearch()">
       <i class="fa-solid fa-plus"></i> New Encounter
     </button>
+  </div>
+  <!-- Filters -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+    <div class="field" style="margin:0;min-width:140px">
+      <label style="font-size:11px">Type</label>
+      <select id="enc-type-filter" onchange="renderEncounters(1)" style="padding:7px 10px;font-size:13px">
+        <option value="">All types</option>
+        ${['OPD','ART Clinic','MCH','TB Clinic','Inpatient','Emergency']
+          .map(t => `<option value="${t}" ${t === typeFilter ? 'selected' : ''}>${t}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" style="margin:0">
+      <label style="font-size:11px">From date</label>
+      <input id="enc-date-from" type="date" value="${dateFrom}"
+             onchange="renderEncounters(1)"
+             style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px">
+    </div>
+    <div class="field" style="margin:0">
+      <label style="font-size:11px">To date</label>
+      <input id="enc-date-to" type="date" value="${dateTo}"
+             onchange="renderEncounters(1)"
+             style="padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px">
+    </div>
+    ${(typeFilter || dateFrom || dateTo)
+      ? `<button class="btn btn-ghost btn-sm" style="align-self:flex-end" onclick="clearEncFilters()">
+           <i class="fa-solid fa-xmark"></i> Clear
+         </button>` : ''}
   </div>
   <div class="card">
     <div class="table-wrap"><table>
@@ -273,20 +348,27 @@ async function renderEncounters() {
         <tr><th>Patient</th><th>SmartID</th><th>Type</th><th>Diagnosis / Complaint</th><th>Date</th><th>Facility</th></tr>
       </thead>
       <tbody>
-        ${data.recent_encounters.map(e=>`
-        <tr>
-          <td class="patient-name">${e.patient_name}</td>
-          <td><span class="tag">${e.smart_id}</span></td>
-          <td>${encTypeBadge(e.encounter_type)}</td>
-          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">
-            ${e.diagnosis||e.chief_complaint||'—'}
-          </td>
-          <td style="font-size:12px">${fmtDate(e.visit_date)}</td>
-          <td style="font-size:12px">${e.facility||'—'}</td>
-        </tr>`).join('')}
+        ${results.length === 0
+          ? `<tr><td colspan="6"><div class="empty-state"><p>No encounters found</p></div></td></tr>`
+          : results.map(e => `
+          <tr style="cursor:pointer" onclick="viewPatient(${e.patient})">
+            <td class="patient-name">${e.patient_name || '—'}</td>
+            <td><span class="tag">${e.smart_id || '—'}</span></td>
+            <td>${encTypeBadge(e.encounter_type)}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">
+              ${e.diagnosis || e.chief_complaint || '—'}
+            </td>
+            <td style="font-size:12px;white-space:nowrap">${fmtDate(e.visit_date)}</td>
+            <td style="font-size:12px">${e.facility || '—'}</td>
+          </tr>`).join('')}
       </tbody>
     </table></div>
+    ${paginationHtml}
   </div>`;
+}
+
+function clearEncFilters() {
+  renderEncounters(1);
 }
 
 function showEncounterModalSearch() {
