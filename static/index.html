@@ -44,10 +44,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   width: 100%;
   max-width: 420px;
   box-shadow: 0 20px 60px rgba(0,0,0,.25);
-  /* never let the card exceed the visible area */
-  max-height: calc(100dvh - 32px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 .login-logo { text-align: center; margin-bottom: 22px }
 .login-logo .cross { font-size: 38px; margin-bottom: 8px; display: block }
@@ -92,13 +88,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 }
 /* Responsive login */
 @media (max-width: 480px) {
-  #login-screen { padding: 12px; align-items: flex-start; padding-top: max(24px, env(safe-area-inset-top, 16px)) }
-  .login-card { padding: 24px 20px; border-radius: 14px; max-height: none }
+  #login-screen {
+    padding: 16px 12px;
+    /* stay centered but allow scrolling if card is taller than viewport */
+    align-items: center;
+    padding-top: max(16px, env(safe-area-inset-top, 16px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  }
+  .login-card {
+    padding: 24px 20px;
+    border-radius: 14px;
+    /* remove fixed max-height so nothing is clipped; page scrolls instead */
+    max-height: none;
+    /* keep card vertically centered with auto margins when content is shorter than screen */
+    margin: auto;
+  }
   .login-logo { margin-bottom: 18px }
   .login-logo .cross { font-size: 32px }
   .login-logo h1 { font-size: 19px }
   .demo-chip { font-size: 12px; padding: 7px 12px }
-  /* Full-width chips on very small screens */
 }
 @media (max-width: 360px) {
   .demo-row { flex-direction: column }
