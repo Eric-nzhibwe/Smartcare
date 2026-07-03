@@ -53,44 +53,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   justify-content: center; gap: 8px;
 }
 .login-logo p { font-size: 12px; color: var(--text3); margin-top: 4px }
-.demo-accounts {
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 20px;
-  font-size: 12px;
-  color: var(--text2);
-}
-.demo-accounts strong {
-  display: block; margin-bottom: 8px;
-  color: var(--text); font-size: 10px;
-  text-transform: uppercase; letter-spacing: .5px;
-}
-.demo-row { display: flex; gap: 6px; flex-wrap: wrap }
-.demo-chip {
-  background: white;
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: all .15s;
-  font-size: 11px;
-  font-family: inherit;
-  touch-action: manipulation;
-  /* tap target size for mobile */
-  min-height: 34px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.demo-chip:hover, .demo-chip:active {
-  background: var(--primary); color: white; border-color: var(--primary);
-}
 /* Responsive login */
 @media (max-width: 480px) {
   #login-screen {
     padding: 16px 12px;
-    /* stay centered but allow scrolling if card is taller than viewport */
     align-items: center;
     padding-top: max(16px, env(safe-area-inset-top, 16px));
     padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
@@ -98,19 +64,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
   .login-card {
     padding: 24px 20px;
     border-radius: 14px;
-    /* remove fixed max-height so nothing is clipped; page scrolls instead */
     max-height: none;
-    /* keep card vertically centered with auto margins when content is shorter than screen */
     margin: auto;
   }
   .login-logo { margin-bottom: 18px }
   .login-logo .cross { font-size: 32px }
   .login-logo h1 { font-size: 19px }
-  .demo-chip { font-size: 12px; padding: 7px 12px }
 }
 @media (max-width: 360px) {
-  .demo-row { flex-direction: column }
-  .demo-chip { justify-content: center }
+  .login-logo h1 { font-size: 17px }
 }
 /* ── app shell ── */
 #app{display:none;height:100vh;flex-direction:row;overflow:hidden}
@@ -387,24 +349,6 @@ textarea{resize:vertical;min-height:70px}
       <p>Ministry of Health · Republic of Zambia</p>
     </div>
 
-    <div class="demo-accounts">
-      <strong>Quick login</strong>
-      <div class="demo-row">
-        <button class="demo-chip" onclick="fillLogin('doctor','Doctor#2025')">
-          <i class="fa-solid fa-user-doctor"></i> Doctor
-        </button>
-        <button class="demo-chip" onclick="fillLogin('nurse','Nurse#2025')">
-          <i class="fa-solid fa-user-nurse"></i> Nurse
-        </button>
-        <button class="demo-chip" onclick="fillLogin('admin','Admin#2025')">
-          <i class="fa-solid fa-shield-halved"></i> Admin
-        </button>
-        <button class="demo-chip" onclick="fillLogin('doctor2','Doctor#2025')">
-          <i class="fa-solid fa-user-doctor"></i> Dr. Lungu
-        </button>
-      </div>
-    </div>
-
     <div class="field" style="margin-bottom:14px">
       <label><i class="fas fa-user"></i> Username</label>
       <input type="text" id="l-user" placeholder="Enter username"
@@ -538,13 +482,7 @@ const ROLE_NAV = {
     <div class="nav-item" data-page="reports" onclick="navigate('reports')"><i class="fa-solid fa-chart-bar fa-fw"></i> Reports</div>`,
 };
 
-/* ── auth ── */
-function fillLogin(u, p) {
-  document.getElementById('l-user').value = u;
-  document.getElementById('l-pass').value = p;
-}
-
-async function doLogin() {
+/* ── auth ── */async function doLogin() {
   const username = document.getElementById('l-user').value.trim();
   const password = document.getElementById('l-pass').value;
   const err      = document.getElementById('l-err');
