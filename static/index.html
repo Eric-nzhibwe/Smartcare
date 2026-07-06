@@ -509,7 +509,7 @@ const ROLE_NAV = {
     _storeSession(data.token, data.refresh, data.user);
     showApp();
   } catch (e) {
-    err.textContent = 'Cannot reach server. Is the backend running?';
+    err.textContent = 'Cannot reach server. If using the free Render plan, the service may be waking up — wait 30 seconds and try again.';
     err.style.display = 'block';
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-sign-in-alt"></i> Sign In'; }
