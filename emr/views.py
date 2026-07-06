@@ -55,6 +55,8 @@ class LoginView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
+        if response.status_code == 400:
+            return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
         if response.status_code == 401:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return response
@@ -72,10 +74,10 @@ def token_refresh(request):
     if not refresh_token:
         return Response({'error': 'Refresh token required'}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        token = RefreshToken(refresh_token)
-        new_access  = str(token.access_token)
-        new_refresh = str(token)           # rotation produces a new refresh token
-        token.blacklist()                  # invalidate the old one
+        old_token   = RefreshToken(refresh_token)
+        new_access  = str(old_token.access_token)
+        new_refresh = str(old_token)       # rotation produces a new refresh token
+        old_token.blacklist()              # invalidate the old one only after capturing both
         return Response({'token': new_access, 'refresh': new_refresh})
     except TokenError as exc:
         return Response({'error': str(exc)}, status=status.HTTP_401_UNAUTHORIZED)

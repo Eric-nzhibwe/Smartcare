@@ -528,9 +528,17 @@ function _storeSession(accessToken, refresh, user) {
 
 function _scheduleRefresh() {
   if (_refreshTimer) clearTimeout(_refreshTimer);
-  // Re-auth 2 minutes before the 12-hour access token expires
-  const MS_11H58M = (12 * 60 - 2) * 60 * 1000;
-  _refreshTimer = setTimeout(_silentRefresh, MS_11H58M);
+  // Decode the JWT payload (base64url) to read the actual expiry time
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const expiresInMs = (payload.exp * 1000) - Date.now();
+    // Refresh 60 seconds before the real expiry (guard against clock drift)
+    const refreshInMs = Math.max(expiresInMs - 60_000, 0);
+    _refreshTimer = setTimeout(_silentRefresh, refreshInMs);
+  } catch {
+    // Fallback: refresh after 55 minutes if the payload can't be parsed
+    _refreshTimer = setTimeout(_silentRefresh, 55 * 60 * 1000);
+  }
 }
 
 async function _silentRefresh() {
@@ -602,7 +610,13 @@ function showApp() {
     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
   });
 
-  document.getElementById('sidebar-nav').innerHTML = ROLE_NAV[role] || ROLE_NAV.admin;
+  const nav = ROLE_NAV[role];
+  if (!nav) {
+    // Unknown role — log out rather than granting admin navigation by default
+    logout();
+    return;
+  }
+  document.getElementById('sidebar-nav').innerHTML = nav;
   document.getElementById('qs-wrap').style.display         = role === 'doctor' ? 'block'       : 'none';
   document.getElementById('triage-btn-wrap').style.display = role === 'nurse'  ? 'inline-flex' : 'none';
 
@@ -755,8 +769,26 @@ const pages_map = {
 
 /* ── init ── */
 if (token && currentUser) {
-  _scheduleRefresh();
-  showApp();
+  // Validate the stored token before showing the app.
+  // If it's expired, try a silent refresh; if that fails, go back to login.
+  (async () => {
+    const res = await fetch('/api/me', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (res.ok) {
+      _scheduleRefresh();
+      showApp();
+    } else if (refreshToken) {
+      await _silentRefresh();
+      if (token) showApp();
+      else document.getElementById('login-screen').style.display = 'flex';
+    } else {
+      localStorage.removeItem('emr_token');
+      localStorage.removeItem('emr_refresh');
+      localStorage.removeItem('emr_user');
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  })();
 } else {
   document.getElementById('login-screen').style.display = 'flex';
 }

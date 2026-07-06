@@ -15,6 +15,9 @@ echo "==> Seeding demo data (creates facilities/users if missing, preserves exis
 python manage.py seed || echo "Seed skipped or partial"
 
 echo "==> Creating superuser (skips if already exists)"
-python manage.py create_superuser || echo "Superuser step skipped"
+python manage.py create_superuser
+if [ $? -ne 0 ]; then
+  echo "WARNING: create_superuser command failed — check that DJANGO_SUPERUSER_USERNAME and DJANGO_SUPERUSER_PASSWORD are set in Render's environment variables."
+fi
 
 echo "==> Build complete"
