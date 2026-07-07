@@ -7,12 +7,21 @@ from django.http import HttpResponsePermanentRedirect
 import os
 
 
-def spa(request, path=''):
-    """Serve the SPA index.html for all non-API, non-admin routes."""
-    doc_root = settings.STATIC_ROOT if os.path.exists(
-        os.path.join(settings.STATIC_ROOT, 'index.html')
-    ) else settings.STATICFILES_DIRS[0]
-    return static_serve(request, 'index.html', document_root=doc_root)
+def _static_root():
+    """Return the directory that contains index.html and app.html."""
+    if os.path.exists(os.path.join(settings.STATIC_ROOT, 'index.html')):
+        return settings.STATIC_ROOT
+    return settings.STATICFILES_DIRS[0]
+
+
+def login_page(request):
+    """Serve the login page (index.html) for the root URL."""
+    return static_serve(request, 'index.html', document_root=_static_root())
+
+
+def app_shell(request):
+    """Serve the app shell (app.html) for authenticated users."""
+    return static_serve(request, 'app.html', document_root=_static_root())
 
 
 def redirect_admin(request):
@@ -21,10 +30,24 @@ def redirect_admin(request):
 
 
 urlpatterns = [
-    # Must come before the catch-all
+    # Django admin
     path('admin/', admin.site.urls),
-    path('admin', redirect_admin),   # handles missing trailing slash
+    path('admin',  redirect_admin),
+
+    # REST API
     path('api/', include('emr.urls')),
-    path('', spa),
-    re_path(r'^(?!admin|api|static).*$', spa),
-] + static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+
+    # Static assets (JS, CSS, images, fonts) — must come before SPA catch-all
+    re_path(
+        r'^static/(?P<path>.+)$',
+        static_serve,
+        {'document_root': settings.STATICFILES_DIRS[0]},
+    ),
+
+    # SPA entry points
+    path('app',  app_shell),   # /app  → app shell
+    path('',     login_page),  # /     → login page
+
+    # Catch-all for any other non-admin, non-api, non-static route → login
+    re_path(r'^(?!admin|api|static).*$', login_page),
+]

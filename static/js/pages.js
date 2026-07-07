@@ -573,11 +573,6 @@ async function renderUsers() {
   </div>`;
 }
 
-function roleBadge(r) {
-  const m = {doctor:'badge-blue', nurse:'badge-green', admin:'badge-warn'};
-  return `<span class="badge ${m[r]||'badge-gray'}">${r}</span>`;
-}
-
 function showAddUserModal() {
   openModal('Add New User', `
   <div class="form-grid">

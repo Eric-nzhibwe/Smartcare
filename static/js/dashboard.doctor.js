@@ -244,8 +244,6 @@ function renderDoctorDashboard(d) {
     header + stats + overduePanel + row1 + row2 + recentEnc;
 }
 
-/* ── helpers ── */
-function _initials(name) { return (name||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-function _todayLabel() {
-  return new Date().toLocaleDateString('en-ZM',{weekday:'long',day:'numeric',month:'long'});
-}
+/* ── local aliases so this file works standalone in tests too ── */
+function _initials(n) { return typeof initials === 'function' ? initials(n) : (n||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function _todayLabel() { return typeof todayLabel === 'function' ? todayLabel() : new Date().toLocaleDateString('en-ZM',{weekday:'long',day:'numeric',month:'long'}); }
