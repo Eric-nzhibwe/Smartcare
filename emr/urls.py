@@ -27,4 +27,11 @@ urlpatterns = [
 
     # Audit log
     path('audit', views.audit_log, name='audit-log'),
+
+    # AI endpoints
+    path('ai/clinical',        views.ai_clinical_insights, name='ai-clinical'),
+    path('ai/triage',          views.ai_triage_summary,    name='ai-triage'),
+    path('ai/admin',           views.ai_admin_insights,    name='ai-admin'),
+    path('ai/doctor-insights', views.ai_doctor_insights,   name='ai-doctor-insights'),
+    path('ai/chat',            views.ai_chat,              name='ai-chat'),
 ]

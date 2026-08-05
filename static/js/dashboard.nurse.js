@@ -26,6 +26,10 @@ function renderNurseDashboard(d) {
       <button class="btn btn-accent btn-sm" onclick="showVitalsSearchModal()">
         <i class="fa-solid fa-heart-pulse"></i> Record Vitals
       </button>
+      <button class="ai-cta-btn" onclick="navigateAI()">
+        <i class="fa-solid fa-robot"></i> AI Triage
+        <span class="ai-badge">Groq</span>
+      </button>
     </div>
   </div>`;
 
@@ -129,7 +133,7 @@ function renderNurseDashboard(d) {
           </tr>`).join('')}
       </tbody>
     </table></div>
-  </div>`;
+  </div>`;}
 
   const followups = `
   <div class="grid-2 mb-4">
@@ -269,9 +273,8 @@ function renderNurseDashboard(d) {
 
   document.getElementById('page-content').innerHTML =
     header + stats + triageQueue + followups + bottom + recent;
-}
 
-/* ── Quick Vitals Modal ── */
+/* ── Quick Vitals Modal ──────────────────────────────────────────────────── */
 function showQuickVitalsModal(encounterId, patientName) {
   openModal(`Record Vitals — ${patientName}`, `
   <div class="vitals-modal-note">
@@ -465,6 +468,10 @@ async function _saveBatch(encId) {
 
 function _skipBatch() { _batchIdx++; _openBatchModal(); }
 
-/* ── local aliases ── */
-function _initials(n) { return typeof initials === 'function' ? initials(n) : (n||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-function _todayLabel() { return typeof todayLabel === 'function' ? todayLabel() : new Date().toLocaleDateString('en-ZM', { weekday: 'long', day: 'numeric', month: 'long' }); }
+/* ── local helpers (nurse-only) ──────────────────────────────────────────── */
+function _initials(name) {
+  return (name || '').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+function _todayLabel() {
+  return new Date().toLocaleDateString('en-ZM', { weekday: 'long', day: 'numeric', month: 'long' });
+}

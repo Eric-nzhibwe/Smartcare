@@ -26,6 +26,10 @@ function renderAdminDashboard(d) {
       <button class="btn btn-outline btn-sm" onclick="navigate('reports')">
         <i class="fa-solid fa-chart-bar"></i> Reports
       </button>
+      <button class="ai-cta-btn" onclick="navigateAI()">
+        <i class="fa-solid fa-robot"></i> AI Analytics
+        <span class="ai-badge">Groq</span>
+      </button>
     </div>
   </div>`;
 
@@ -277,5 +281,5 @@ function renderAdminDashboard(d) {
     header + stats + facilityRow + trendRow + statsRow + recentRow + dqPanel;
 }
 
-function _initials(n) { return typeof initials === 'function' ? initials(n) : (n||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-function _todayLabel() { return typeof todayLabel === 'function' ? todayLabel() : new Date().toLocaleDateString('en-ZM',{weekday:'long',day:'numeric',month:'long'}); }
+function _initials(name) { return (name||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function _todayLabel() { return new Date().toLocaleDateString('en-ZM',{weekday:'long',day:'numeric',month:'long'}); }

@@ -24,6 +24,10 @@ function renderDoctorDashboard(d) {
       <button class="btn btn-outline btn-sm" onclick="navigate('patients')">
         <i class="fa-solid fa-users"></i> My Patients
       </button>
+      <button class="ai-cta-btn" onclick="navigateAI()">
+        <i class="fa-solid fa-robot"></i> AI Assistant
+        <span class="ai-badge">Groq</span>
+      </button>
     </div>
   </div>`;
 
@@ -244,6 +248,8 @@ function renderDoctorDashboard(d) {
     header + stats + overduePanel + row1 + row2 + recentEnc;
 }
 
-/* ── local aliases so this file works standalone in tests too ── */
-function _initials(n) { return typeof initials === 'function' ? initials(n) : (n||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-function _todayLabel() { return typeof todayLabel === 'function' ? todayLabel() : new Date().toLocaleDateString('en-ZM',{weekday:'long',day:'numeric',month:'long'}); }
+/* ── helpers ── */
+function _initials(name) { return (name||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function _todayLabel() {
+  return new Date().toLocaleDateString('en-ZM',{weekday:'long',day:'numeric',month:'long'});
+}

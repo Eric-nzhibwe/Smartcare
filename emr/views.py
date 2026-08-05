@@ -4,9 +4,10 @@ from django.db import transaction
 from django.db.models import Count, Q, Exists, OuterRef
 from django.db.models.functions import TruncMonth
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -21,6 +22,7 @@ from .serializers import (
     PatientSerializer,
     EncounterSerializer,
 )
+from . import ai as groq_ai
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -55,8 +57,6 @@ class LoginView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-        if response.status_code == 400:
-            return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
         if response.status_code == 401:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return response
@@ -74,10 +74,10 @@ def token_refresh(request):
     if not refresh_token:
         return Response({'error': 'Refresh token required'}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        old_token   = RefreshToken(refresh_token)
-        new_access  = str(old_token.access_token)
-        new_refresh = str(old_token)       # rotation produces a new refresh token
-        old_token.blacklist()              # invalidate the old one only after capturing both
+        token = RefreshToken(refresh_token)
+        new_access  = str(token.access_token)
+        new_refresh = str(token)           # rotation produces a new refresh token
+        token.blacklist()                  # invalidate the old one
         return Response({'token': new_access, 'refresh': new_refresh})
     except TokenError as exc:
         return Response({'error': str(exc)}, status=status.HTTP_401_UNAUTHORIZED)
@@ -692,3 +692,277 @@ def audit_log(request):
 
     qs = AuditLog.objects.select_related('user').order_by('-timestamp')[:limit]
     return Response(AuditLogSerializer(qs, many=True).data)
+
+
+# ── AI Endpoints ──────────────────────────────────────────────────────────────
+
+class AiRateThrottle(UserRateThrottle):
+    """30 requests/minute per user for all AI endpoints."""
+    scope = 'ai'
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@throttle_classes([AiRateThrottle])
+def ai_clinical_insights(request):
+    """
+    POST /api/ai/clinical
+    Doctor: get differential diagnoses + red flags for an encounter.
+    Body: { encounter_id } — fetches encounter + patient context server-side.
+    """
+    if request.user.role not in ('doctor', 'admin'):
+        return Response({'error': 'Doctors only'}, status=status.HTTP_403_FORBIDDEN)
+
+    encounter_id = request.data.get('encounter_id')
+    if not encounter_id:
+        return Response({'error': 'encounter_id required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        enc = Encounter.objects.select_related('patient').get(
+            pk=encounter_id, **({'clinician': request.user} if request.user.role == 'doctor' else {})
+        )
+    except Encounter.DoesNotExist:
+        return Response({'error': 'Encounter not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    patient = enc.patient
+    age = (datetime.date.today() - patient.date_of_birth).days // 365
+
+    # Recent diagnoses — last 5 unique, excluding current
+    recent_diagnoses = list(
+        Encounter.objects.filter(patient=patient)
+        .exclude(pk=enc.pk)
+        .exclude(diagnosis='')
+        .order_by('-visit_date')
+        .values_list('diagnosis', flat=True)[:5]
+    )
+
+    vitals = {
+        'temperature':    enc.temperature,
+        'pulse':          enc.pulse,
+        'blood_pressure': enc.blood_pressure or None,
+        'weight_kg':      enc.weight,
+        'oxygen_sat':     enc.oxygen_sat,
+    }
+    # Strip None values
+    vitals = {k: v for k, v in vitals.items() if v not in (None, '', 0)}
+
+    try:
+        result = groq_ai.get_clinical_insights(
+            chief_complaint=enc.chief_complaint,
+            vitals=vitals,
+            age=age,
+            gender=patient.gender,
+            allergies=patient.allergies,
+            encounter_type=enc.encounter_type,
+            recent_diagnoses=recent_diagnoses,
+        )
+        return Response(result)
+    except RuntimeError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception:
+        return Response({'error': 'AI service temporarily unavailable'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@throttle_classes([AiRateThrottle])
+def ai_triage_summary(request):
+    """
+    GET /api/ai/triage
+    Nurse: AI-generated triage priority summary for today's queue.
+    """
+    if request.user.role not in ('nurse', 'admin'):
+        return Response({'error': 'Nurses only'}, status=status.HTTP_403_FORBIDDEN)
+
+    today = datetime.date.today()
+    enc_qs = (
+        Encounter.objects.filter(_facility_filter(request.user), visit_date=today)
+        .select_related('patient')
+        .order_by('-created_at')[:30]
+    )
+
+    queue = []
+    for e in enc_qs:
+        age = (today - e.patient.date_of_birth).days // 365
+        has_vitals = bool(e.temperature or e.pulse or e.blood_pressure or e.weight or e.oxygen_sat)
+        queue.append({
+            'age':            age,
+            'gender':         e.patient.gender,
+            'encounter_type': e.encounter_type,
+            'chief_complaint': e.chief_complaint,
+            'has_vitals':     has_vitals,
+            'has_allergy':    bool(e.patient.allergies and
+                                   e.patient.allergies not in ('', 'None', 'none', 'N/A')),
+        })
+
+    try:
+        summary = groq_ai.get_triage_summary(queue)
+        return Response({'summary': summary, 'queue_size': len(queue)})
+    except RuntimeError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception:
+        return Response({'error': 'AI service temporarily unavailable'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@throttle_classes([AiRateThrottle])
+def ai_admin_insights(request):
+    """
+    GET /api/ai/admin
+    Admin: AI-generated operational insights from dashboard data.
+    """
+    if request.user.role != 'admin':
+        return Response({'error': 'Admin only'}, status=status.HTTP_403_FORBIDDEN)
+
+    today = datetime.date.today()
+    week_ago = today - datetime.timedelta(days=7)
+    six_months_ago = today - datetime.timedelta(days=180)
+
+    stats = {
+        'total_patients':   Patient.objects.count(),
+        'total_encounters': Encounter.objects.count(),
+        'today_encounters': Encounter.objects.filter(visit_date=today).count(),
+        'new_this_week':    Patient.objects.filter(registered_at__date__gte=week_ago).count(),
+    }
+    top_diagnoses = list(
+        Encounter.objects.exclude(diagnosis='')
+        .values('diagnosis').annotate(cnt=Count('id')).order_by('-cnt')[:5]
+    )
+    enc_types = list(
+        Encounter.objects.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt')
+    )
+    dq_no_phone  = Patient.objects.filter(Q(phone='') | Q(phone__isnull=True)).count()
+    dq_no_nrc    = Patient.objects.filter(Q(nrc_number='') | Q(nrc_number__isnull=True)).count()
+    dq_no_vitals = Encounter.objects.filter(
+        temperature__isnull=True, pulse__isnull=True, blood_pressure=''
+    ).count()
+    data_quality = {'no_phone': dq_no_phone, 'no_nrc': dq_no_nrc, 'no_vitals': dq_no_vitals}
+
+    raw = (Encounter.objects.filter(visit_date__gte=six_months_ago)
+           .values('visit_date').annotate(cnt=Count('id')))
+    month_counts: dict[str, int] = {}
+    for row in raw:
+        m = str(row['visit_date'])[:7]
+        month_counts[m] = month_counts.get(m, 0) + row['cnt']
+    monthly_trend = [{'month': m, 'cnt': c} for m, c in sorted(month_counts.items())]
+
+    try:
+        insights = groq_ai.get_admin_insights(
+            stats=stats,
+            top_diagnoses=top_diagnoses,
+            enc_types=enc_types,
+            data_quality=data_quality,
+            monthly_trend=monthly_trend,
+        )
+        return Response({'insights': insights})
+    except RuntimeError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception:
+        return Response({'error': 'AI service temporarily unavailable'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@throttle_classes([AiRateThrottle])
+def ai_doctor_insights(request):
+    """
+    GET /api/ai/doctor-insights
+    Doctor: AI-generated workload and clinical pattern insights from the
+    clinician's own aggregate data (no encounter_id needed).
+    """
+    if request.user.role not in ('doctor', 'admin'):
+        return Response({'error': 'Doctors only'}, status=status.HTTP_403_FORBIDDEN)
+
+    today    = datetime.date.today()
+    week_ago = today - datetime.timedelta(days=7)
+    six_months_ago = today - datetime.timedelta(days=180)
+
+    # Scope to this clinician (admin can pass ?clinician_id= for impersonation)
+    if request.user.role == 'admin':
+        enc_base = Encounter.objects.all()
+    else:
+        enc_base = Encounter.objects.filter(clinician=request.user)
+
+    stats = {
+        'total_my_patients':    enc_base.values('patient').distinct().count(),
+        'total_my_encounters':  enc_base.count(),
+        'today_my_encounters':  enc_base.filter(visit_date=today).count(),
+        'monthly_my_encounters': enc_base.filter(
+            visit_date__year=today.year,
+            visit_date__month=today.month,
+        ).count(),
+    }
+
+    top_diagnoses = list(
+        enc_base.exclude(diagnosis='')
+        .values('diagnosis').annotate(cnt=Count('id')).order_by('-cnt')[:5]
+    )
+    enc_types = list(
+        enc_base.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt')
+    )
+
+    raw = enc_base.filter(visit_date__gte=six_months_ago).values('visit_date').annotate(cnt=Count('id'))
+    month_counts: dict[str, int] = {}
+    for row in raw:
+        m = str(row['visit_date'])[:7]
+        month_counts[m] = month_counts.get(m, 0) + row['cnt']
+    monthly_trend = [{'month': m, 'cnt': c} for m, c in sorted(month_counts.items())]
+
+    upcoming_followups = enc_base.filter(
+        follow_up_date__gte=today,
+        follow_up_date__lte=today + datetime.timedelta(days=14),
+    ).count()
+    overdue_followups = enc_base.filter(follow_up_date__lt=today).count()
+
+    try:
+        insights = groq_ai.get_doctor_insights(
+            stats=stats,
+            top_diagnoses=top_diagnoses,
+            enc_types=enc_types,
+            monthly_trend=monthly_trend,
+            upcoming_followups=upcoming_followups,
+            overdue_followups=overdue_followups,
+        )
+        return Response({'insights': insights})
+    except RuntimeError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception:
+        return Response({'error': 'AI service temporarily unavailable'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@throttle_classes([AiRateThrottle])
+def ai_chat(request):
+    """
+    POST /api/ai/chat
+    All roles: multi-turn freeform AI chat.
+    Body: { messages: [{role, content}, ...] }
+    """
+    messages = request.data.get('messages', [])
+    if not messages or not isinstance(messages, list):
+        return Response({'error': 'messages array required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Sanitise — only allow role/content keys, limit history to last 20 turns
+    clean = [
+        {'role': m['role'], 'content': str(m['content'])[:2000]}
+        for m in messages[-20:]
+        if isinstance(m, dict) and m.get('role') in ('user', 'assistant') and m.get('content')
+    ]
+
+    if not clean:
+        return Response({'error': 'No valid messages'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        reply = groq_ai.freeform_chat(clean, role=request.user.role)
+        return Response({'reply': reply})
+    except RuntimeError as exc:
+        return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception:
+        return Response({'error': 'AI service temporarily unavailable'},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
