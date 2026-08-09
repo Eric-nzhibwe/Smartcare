@@ -67,7 +67,8 @@ function navigateAI() {
   const cfg  = AI_CFG[role] || AI_CFG.doctor;
   currentPage = 'ai';
   document.getElementById('page-title').textContent = cfg.label;
-  setActiveNav('ai');
+  // setActiveNav is defined in index.html and handles sidebar highlight + close
+  if (typeof setActiveNav === 'function') setActiveNav('ai');
   _aiMessages = [];
   _aiTab      = 'chat';
   _aiInsight  = { content:'', loading:false, error:'' };

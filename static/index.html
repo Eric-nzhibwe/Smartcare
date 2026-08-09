@@ -285,7 +285,11 @@ textarea{resize:vertical;min-height:70px}
 }
 
 /* ── Enhanced dashboard components ── */
-/* ── AI Assistant styles ── */
+/* ════════════════════════════════════════════════════════
+   AI ASSISTANT — complete styles
+   ════════════════════════════════════════════════════════ */
+
+/* Typing indicator dots */
 @keyframes ai-dot-pulse {
   0%,100%{transform:translateY(0);opacity:.4}
   50%{transform:translateY(-4px);opacity:1}
@@ -294,11 +298,15 @@ textarea{resize:vertical;min-height:70px}
   display:inline-block;width:7px;height:7px;border-radius:50%;
   background:var(--primary);animation:ai-dot-pulse 1.2s infinite ease-in-out;
 }
+
+/* Page fade-in */
 .ai-panel-fade{animation:ai-fade-in .25s ease}
 @keyframes ai-fade-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-/* AI nav item highlight */
+
+/* AI nav item */
 .nav-item[data-page="ai"]{border-left-color:transparent}
 .nav-item[data-page="ai"].active{border-left-color:#f59e0b}
+
 /* AI CTA button in banners */
 .ai-cta-btn{
   display:inline-flex;align-items:center;gap:8px;
@@ -311,6 +319,52 @@ textarea{resize:vertical;min-height:70px}
 .ai-cta-btn .ai-badge{
   background:rgba(255,255,255,.2);border-radius:4px;
   padding:1px 6px;font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;
+}
+
+/* AI shell layout */
+#ai-shell{
+  display:flex;flex-direction:column;
+  height:calc(100vh - 56px - 40px);
+  max-width:860px;margin:0 auto;
+}
+
+/* Chat message area */
+#ai-messages{
+  flex:1;overflow-y:auto;padding:20px;
+  display:flex;flex-direction:column;gap:14px;
+  scroll-behavior:smooth;
+}
+#ai-messages::-webkit-scrollbar{width:4px}
+#ai-messages::-webkit-scrollbar-track{background:transparent}
+#ai-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* Message bubble entrance animation */
+@keyframes msg-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#ai-messages > div{animation:msg-in .2s ease}
+
+/* Insights panel scrollbar */
+#ai-insights-panel::-webkit-scrollbar{width:4px}
+#ai-insights-panel::-webkit-scrollbar-track{background:transparent}
+#ai-insights-panel::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* Tab active state helper classes */
+.ai-tab-active{font-weight:600}
+
+/* Suggestion chip hover */
+.ai-suggestion-chip{
+  text-align:left;border-radius:var(--radius-sm);
+  background:white;cursor:pointer;
+  font-size:12px;font-family:inherit;font-weight:500;
+  transition:all .15s;line-height:1.4;box-shadow:var(--shadow);
+}
+
+/* Mobile adjustments */
+@media(max-width:640px){
+  #ai-shell{height:calc(100dvh - 56px - 28px)}
+  #ai-messages{padding:14px}
+}
+@media(max-width:480px){
+  #ai-shell{height:calc(100dvh - 56px - 28px)}
 }
 /* KPI delta badges on stat cards */
 .stat-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:1px 6px;border-radius:10px;margin-top:4px}
@@ -797,6 +851,14 @@ const pages_map = {
   reports:    renderReports,
   users:      renderUsers,
 };
+
+/* ── set active nav item (used by navigateAI and navigate) ── */
+function setActiveNav(page) {
+  document.querySelectorAll('#sidebar-nav .nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  closeSidebar();
+}
 
 /* ── init ── */
 if (token && currentUser) {
