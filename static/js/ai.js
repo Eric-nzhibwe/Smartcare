@@ -1,295 +1,355 @@
 /* ============================================================
    SMARTCARE AI  — Groq-powered assistant
-   Works for all roles: doctor (clinical), nurse (triage), admin (analytics)
+   Professional UI  ·  Works for doctor / nurse / admin
    ============================================================ */
 
 /* ── State ── */
-let _aiMessages  = [];   // { role:'user'|'assistant', content:string }[]
+let _aiMessages  = [];
 let _aiSending   = false;
-let _aiTab       = 'chat'; // 'chat' | 'insights'
-let _aiInsight   = { content:'', loading:false, error:'' };
+let _aiTab       = 'chat';
+let _aiInsight   = { content: '', loading: false, error: '' };
 
 /* ── Role config ── */
 const AI_CFG = {
   doctor: {
-    color:        'var(--primary)',
-    colorLight:   'var(--primary-ghost)',
-    label:        'Clinical AI Assistant',
-    subtitle:     'Differential diagnoses · Decision support',
-    icon:         'fa-user-doctor',
-    insightLabel: 'Clinical Insights',
-    insightIcon:  'fa-stethoscope',
+    color:           'var(--primary)',
+    colorHex:        '#0f4c81',
+    colorLight:      'var(--primary-ghost)',
+    gradientFrom:    '#0f4c81',
+    gradientTo:      '#1a69b3',
+    label:           'Clinical AI Assistant',
+    subtitle:        'Differential diagnoses · Decision support',
+    icon:            'fa-user-doctor',
+    insightLabel:    'Clinical Insights',
+    insightIcon:     'fa-stethoscope',
     insightEndpoint: '/api/ai/doctor-insights',
     suggestions: [
-      'What are common causes of chest pain in adults?',
-      'How do I manage hypertensive urgency?',
-      'Investigations for suspected pulmonary TB?',
-      'Differential diagnosis for acute abdomen?',
+      { icon: 'fa-heart-pulse',     text: 'Common causes of chest pain in adults?' },
+      { icon: 'fa-droplet',         text: 'How do I manage hypertensive urgency?' },
+      { icon: 'fa-lungs',           text: 'Investigations for suspected pulmonary TB?' },
+      { icon: 'fa-circle-radiation',text: 'Differential diagnosis for acute abdomen?' },
     ],
   },
   nurse: {
-    color:        'var(--accent)',
-    colorLight:   'var(--accent-light)',
-    label:        'Triage AI Assistant',
-    subtitle:     'Patient care coordination · Triage support',
-    icon:         'fa-user-nurse',
-    insightLabel: 'Triage Summary',
-    insightIcon:  'fa-clipboard-list',
+    color:           'var(--accent)',
+    colorHex:        '#00a878',
+    colorLight:      'var(--accent-light)',
+    gradientFrom:    '#00a878',
+    gradientTo:      '#00956a',
+    label:           'Triage AI Assistant',
+    subtitle:        'Patient care coordination · Triage support',
+    icon:            'fa-user-nurse',
+    insightLabel:    'Triage Summary',
+    insightIcon:     'fa-clipboard-list',
     insightEndpoint: '/api/ai/triage',
     suggestions: [
-      'Normal vital sign ranges for adults?',
-      'When should I escalate a patient urgently?',
-      'How to manage SpO₂ below 92%?',
-      'Early warning signs of sepsis during triage?',
+      { icon: 'fa-heart',           text: 'Normal vital sign ranges for adults?' },
+      { icon: 'fa-triangle-exclamation', text: 'When should I escalate a patient urgently?' },
+      { icon: 'fa-lungs-virus',     text: 'How to manage SpO₂ below 92%?' },
+      { icon: 'fa-bacterium',       text: 'Early warning signs of sepsis during triage?' },
     ],
   },
   admin: {
-    color:        'var(--warn)',
-    colorLight:   'var(--warn-light)',
-    label:        'Health Analytics AI',
-    subtitle:     'Operational insights · System performance',
-    icon:         'fa-shield-halved',
-    insightLabel: 'System Insights',
-    insightIcon:  'fa-chart-line',
+    color:           'var(--warn)',
+    colorHex:        '#d97706',
+    colorLight:      'var(--warn-light)',
+    gradientFrom:    '#d97706',
+    gradientTo:      '#b45309',
+    label:           'Health Analytics AI',
+    subtitle:        'Operational insights · System performance',
+    icon:            'fa-shield-halved',
+    insightLabel:    'System Insights',
+    insightIcon:     'fa-chart-line',
     insightEndpoint: '/api/ai/admin',
     suggestions: [
-      'How can I improve EMR data quality?',
-      'What metrics indicate a well-performing facility?',
-      'How to improve patient follow-up compliance?',
-      'How to interpret encounter volume trends?',
+      { icon: 'fa-database',        text: 'How can I improve EMR data quality?' },
+      { icon: 'fa-chart-bar',       text: 'What metrics indicate a well-performing facility?' },
+      { icon: 'fa-calendar-check',  text: 'How to improve patient follow-up compliance?' },
+      { icon: 'fa-arrow-trend-up',  text: 'How to interpret encounter volume trends?' },
     ],
   },
 };
 
-/* ── Entry point: navigate to AI page ── */
+/* ═══════════════════════════════════════
+   Entry point
+   ═══════════════════════════════════════ */
 function navigateAI() {
   const role = currentUser?.role || 'doctor';
   const cfg  = AI_CFG[role] || AI_CFG.doctor;
   currentPage = 'ai';
   document.getElementById('page-title').textContent = cfg.label;
-  // setActiveNav is defined in index.html and handles sidebar highlight + close
   if (typeof setActiveNav === 'function') setActiveNav('ai');
   _aiMessages = [];
   _aiTab      = 'chat';
-  _aiInsight  = { content:'', loading:false, error:'' };
+  _aiInsight  = { content: '', loading: false, error: '' };
   _renderAIShell(cfg, role);
   _aiAddWelcome(cfg);
 }
 
-/* ── Build the AI page shell ── */
+/* ═══════════════════════════════════════
+   Shell
+   ═══════════════════════════════════════ */
 function _renderAIShell(cfg, role) {
   document.getElementById('page-content').innerHTML = `
-  <div id="ai-shell" style="display:flex;flex-direction:column;height:calc(100vh - 56px - 40px);max-width:860px;margin:0 auto">
+  <div id="ai-shell">
 
-    <!-- Header card -->
-    <div class="ai-header-card" style="background:white;border:1px solid var(--border);border-radius:var(--radius);
-         padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow)">
-      <div style="width:48px;height:48px;border-radius:12px;background:${cfg.colorLight};
-           display:flex;align-items:center;justify-content:center;font-size:22px;color:${cfg.color};flex-shrink:0">
-        <i class="fa-solid ${cfg.icon}"></i>
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:16px;font-weight:600;color:var(--text);letter-spacing:-.2px">${cfg.label}</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e"></span>
-          Powered by Groq · LLaMA 3.3 70B · ${cfg.subtitle}
+    <!-- ── Hero header ── -->
+    <div class="ai-hero">
+      <div class="ai-hero__glow" style="background:linear-gradient(135deg,${cfg.gradientFrom}22,${cfg.gradientTo}11)"></div>
+      <div class="ai-hero__inner">
+        <div class="ai-hero__icon" style="background:linear-gradient(135deg,${cfg.gradientFrom},${cfg.gradientTo})">
+          <i class="fa-solid ${cfg.icon}"></i>
+        </div>
+        <div class="ai-hero__text">
+          <h1 class="ai-hero__title">${cfg.label}</h1>
+          <p class="ai-hero__sub">
+            <span class="ai-status-dot"></span>
+            <span>${cfg.subtitle}</span>
+            <span class="ai-hero__divider">·</span>
+            <span class="ai-hero__meta-badge">
+              <i class="fa-solid fa-bolt" style="font-size:9px"></i>
+              Groq · LLaMA 3.3 70B
+            </span>
+          </p>
+        </div>
+        <div class="ai-hero__actions">
+          <button class="ai-icon-btn" onclick="_clearAIChat()" title="New conversation">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>New Chat</span>
+          </button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" onclick="_clearAIChat()">
-          <i class="fa-solid fa-rotate-right"></i> New Chat
-        </button>
-      </div>
     </div>
 
-    <!-- Tab bar -->
-    <div style="display:flex;background:white;border:1px solid var(--border);border-radius:var(--radius);
-         margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)">
-      <button id="ai-tab-chat" onclick="_switchAITab('chat','${role}')"
-        style="flex:1;padding:11px 16px;border:none;cursor:pointer;font-family:inherit;font-size:13px;
-               font-weight:500;display:flex;align-items:center;justify-content:center;gap:7px;
-               transition:all .15s;background:${_aiTab==='chat'?cfg.colorLight:'white'};
-               color:${_aiTab==='chat'?cfg.color:'var(--text3)'};
-               border-bottom:2px solid ${_aiTab==='chat'?cfg.color:'transparent'}">
-        <i class="fa-solid fa-comments"></i> AI Chat
+    <!-- ── Tab bar ── -->
+    <div class="ai-tabs" role="tablist">
+      <button id="ai-tab-chat" role="tab" aria-selected="${_aiTab === 'chat'}"
+        class="ai-tab ${_aiTab === 'chat' ? 'ai-tab--active' : ''}"
+        style="${_aiTab === 'chat' ? `--tab-color:${cfg.colorHex}` : ''}"
+        onclick="_switchAITab('chat','${role}')">
+        <i class="fa-solid fa-comments"></i>
+        <span>AI Chat</span>
       </button>
-      <button id="ai-tab-insights" onclick="_switchAITab('insights','${role}')"
-        style="flex:1;padding:11px 16px;border:none;cursor:pointer;font-family:inherit;font-size:13px;
-               font-weight:500;display:flex;align-items:center;justify-content:center;gap:7px;
-               transition:all .15s;background:${_aiTab==='insights'?cfg.colorLight:'white'};
-               color:${_aiTab==='insights'?cfg.color:'var(--text3)'};
-               border-bottom:2px solid ${_aiTab==='insights'?cfg.color:'transparent'}">
-        <i class="fa-solid ${cfg.insightIcon}"></i> ${cfg.insightLabel}
+      <button id="ai-tab-insights" role="tab" aria-selected="${_aiTab === 'insights'}"
+        class="ai-tab ${_aiTab === 'insights' ? 'ai-tab--active' : ''}"
+        style="${_aiTab === 'insights' ? `--tab-color:${cfg.colorHex}` : ''}"
+        onclick="_switchAITab('insights','${role}')">
+        <i class="fa-solid ${cfg.insightIcon}"></i>
+        <span>${cfg.insightLabel}</span>
       </button>
     </div>
 
-    <!-- Chat panel -->
-    <div id="ai-chat-panel" style="flex:1;display:${_aiTab==='chat'?'flex':'none'};flex-direction:column;
-         min-height:0;background:white;border:1px solid var(--border);border-radius:var(--radius);
-         overflow:hidden;box-shadow:var(--shadow)">
-      <div id="ai-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;
-           flex-direction:column;gap:14px;scroll-behavior:smooth"></div>
-      <div id="ai-input-area" style="border-top:1px solid var(--border);padding:14px 16px;background:var(--surface2)">
-        <div style="display:flex;gap:10px;align-items:flex-end">
-          <textarea id="ai-input" rows="1" placeholder="Ask SmartCare AI…"
-            style="flex:1;border:1.5px solid ${cfg.color}50;border-radius:var(--radius-sm);padding:10px 12px;
-                   font-size:14px;font-family:inherit;resize:none;outline:none;line-height:1.5;
-                   transition:border-color .15s;max-height:120px;overflow-y:auto;background:white"
-            onfocus="this.style.borderColor='${cfg.color}'"
-            onblur="this.style.borderColor='${cfg.color}50'"
-            onkeydown="_aiInputKeydown(event,'${role}')"
-            oninput="_aiAutoResize(this)"></textarea>
-          <button id="ai-send-btn" onclick="_sendAIMessage(null,'${role}')"
-            style="width:42px;height:42px;border-radius:var(--radius-sm);border:none;cursor:pointer;
-                   background:${cfg.color};color:white;font-size:15px;flex-shrink:0;
-                   display:flex;align-items:center;justify-content:center;transition:opacity .15s">
+    <!-- ── Chat panel ── -->
+    <div id="ai-chat-panel" class="ai-chat-panel" style="display:${_aiTab === 'chat' ? 'flex' : 'none'}">
+
+      <!-- messages -->
+      <div id="ai-messages" class="ai-messages"></div>
+
+      <!-- input area -->
+      <div class="ai-input-area">
+        <div class="ai-input-row">
+          <div class="ai-input-wrap" style="--focus-color:${cfg.colorHex}">
+            <textarea id="ai-input" rows="1"
+              placeholder="Ask SmartCare AI…"
+              class="ai-textarea"
+              onkeydown="_aiInputKeydown(event,'${role}')"
+              oninput="_aiAutoResize(this)"></textarea>
+            <div class="ai-input-hint">
+              <i class="fa-solid fa-keyboard"></i> Enter to send &nbsp;·&nbsp; Shift+Enter for newline
+            </div>
+          </div>
+          <button id="ai-send-btn"
+            class="ai-send-btn"
+            style="background:linear-gradient(135deg,${cfg.gradientFrom},${cfg.gradientTo})"
+            onclick="_sendAIMessage(null,'${role}')"
+            title="Send message (Enter)">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center;line-height:1.4">
+        <p class="ai-disclaimer">
+          <i class="fa-solid fa-shield-halved"></i>
           AI responses are for clinical support only — not a substitute for professional judgement.
-        </div>
+        </p>
       </div>
     </div>
 
-    <!-- Insights panel -->
-    <div id="ai-insights-panel" style="flex:1;display:${_aiTab==='insights'?'flex':'none'};
-         flex-direction:column;overflow-y:auto;gap:14px">
+    <!-- ── Insights panel ── -->
+    <div id="ai-insights-panel" class="ai-insights-panel" style="display:${_aiTab === 'insights' ? 'flex' : 'none'}">
       ${_renderInsightsPanel(cfg, role)}
     </div>
 
   </div>`;
 
-  // Render suggestion chips into the messages area
   _renderSuggestions(cfg, role);
 }
 
-/* ── Suggestion chips ── */
+/* ═══════════════════════════════════════
+   Suggestion chips
+   ═══════════════════════════════════════ */
 function _renderSuggestions(cfg, role) {
   const el = document.getElementById('ai-messages');
   if (!el || _aiMessages.length > 1) return;
+
   const chips = cfg.suggestions.map(s => `
-    <button onclick="_sendAIMessage('${s.replace(/'/g, "\\'")}','${role}')"
-      style="text-align:left;padding:10px 14px;border:1.5px solid ${cfg.color}30;border-radius:var(--radius-sm);
-             background:white;cursor:pointer;font-size:12px;font-family:inherit;color:${cfg.color};
-             font-weight:500;transition:all .15s;line-height:1.4;box-shadow:var(--shadow)"
-      onmouseover="this.style.background='${cfg.colorLight}'"
-      onmouseout="this.style.background='white'">
-      ${s}
+    <button class="ai-chip"
+      style="--chip-color:${cfg.colorHex}"
+      onclick="_sendAIMessage(${JSON.stringify(s.text)},'${role}')">
+      <span class="ai-chip__icon"><i class="fa-solid ${s.icon}"></i></span>
+      <span class="ai-chip__text">${s.text}</span>
+      <i class="fa-solid fa-arrow-right ai-chip__arrow"></i>
     </button>`).join('');
 
-  const suggestDiv = document.createElement('div');
-  suggestDiv.id = 'ai-suggestions';
-  suggestDiv.innerHTML = `
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
-                color:var(--text3);margin-bottom:10px">Suggested questions</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${chips}</div>`;
-  el.appendChild(suggestDiv);
+  const div = document.createElement('div');
+  div.id = 'ai-suggestions';
+  div.className = 'ai-suggestions';
+  div.innerHTML = `
+    <p class="ai-suggestions__label">
+      <i class="fa-solid fa-lightbulb"></i> Suggested questions
+    </p>
+    <div class="ai-chips-grid">${chips}</div>`;
+  el.appendChild(div);
 }
 
-/* ── Welcome message ── */
+/* ═══════════════════════════════════════
+   Welcome message
+   ═══════════════════════════════════════ */
 function _aiAddWelcome(cfg) {
   _aiMessages = [{
     role:    'assistant',
-    content: `Hello! I'm SmartCare AI, your ${cfg.subtitle.toLowerCase()}. How can I help you today?`,
+    content: `Hello! I'm **SmartCare AI**, your ${cfg.subtitle.toLowerCase()}.\n\nHow can I assist you today?`,
     ts:      new Date(),
   }];
   _renderAIMessages(cfg);
 }
 
-/* ── Render all messages ── */
+/* ═══════════════════════════════════════
+   Render messages
+   ═══════════════════════════════════════ */
 function _renderAIMessages(cfg) {
   const el = document.getElementById('ai-messages');
   if (!el) return;
 
-  // Keep suggestions if chat is fresh
   const suggestHtml = _aiMessages.length <= 1
     ? (document.getElementById('ai-suggestions')?.outerHTML || '') : '';
 
-  el.innerHTML = _aiMessages.map((m, i) => _renderBubble(m, cfg)).join('') + suggestHtml;
+  el.innerHTML = _aiMessages.map(m => _renderBubble(m, cfg)).join('') + suggestHtml;
   el.scrollTop = el.scrollHeight;
 }
 
-/* ── Single message bubble ── */
+/* ── Single bubble ── */
 function _renderBubble(m, cfg) {
   const isUser = m.role === 'user';
-  const time   = m.ts ? m.ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
-  const txt    = m.isLoading
-    ? `<div style="display:flex;gap:5px;align-items:center;padding:4px 2px">
-         <span class="ai-dot"></span><span class="ai-dot" style="animation-delay:.2s"></span>
-         <span class="ai-dot" style="animation-delay:.4s"></span>
-       </div>`
-    : `<div style="white-space:pre-wrap;word-break:break-word;line-height:1.6">${_fmtAIText(m.content)}</div>
-       <div style="font-size:10px;color:${isUser?'rgba(255,255,255,.6)':'var(--text3)'};
-                   margin-top:6px;text-align:right">${time}</div>`;
+  const time   = m.ts
+    ? m.ts.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  if (m.isLoading) {
+    return `
+    <div class="ai-bubble-row ai-bubble-row--ai">
+      <div class="ai-avatar ai-avatar--ai" style="background:${cfg.colorHex}18;color:${cfg.colorHex}">
+        <i class="fa-solid fa-robot"></i>
+      </div>
+      <div class="ai-bubble ai-bubble--ai">
+        <div class="ai-typing">
+          <span class="ai-dot"></span>
+          <span class="ai-dot" style="animation-delay:.18s"></span>
+          <span class="ai-dot" style="animation-delay:.36s"></span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const bodyHtml = `<div class="ai-bubble__text">${_fmtAIText(m.content)}</div>
+    <div class="ai-bubble__footer">
+      <span class="ai-bubble__time">${time}</span>
+      ${!isUser ? `<button class="ai-copy-btn" onclick="_copyAIMsg(this)" title="Copy response">
+        <i class="fa-regular fa-copy"></i>
+      </button>` : ''}
+    </div>`;
 
   if (isUser) return `
-    <div style="display:flex;justify-content:flex-end;gap:8px;align-items:flex-end">
-      <div style="max-width:72%;background:${cfg.color};color:white;border-radius:14px 14px 4px 14px;
-                  padding:11px 15px;font-size:14px;box-shadow:var(--shadow)">${txt}</div>
-      <div style="width:30px;height:30px;border-radius:50%;background:${cfg.color};color:white;
-                  display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-bottom:2px">
+    <div class="ai-bubble-row ai-bubble-row--user">
+      <div class="ai-bubble ai-bubble--user" style="background:linear-gradient(135deg,${cfg.gradientFrom},${cfg.gradientTo})">
+        ${bodyHtml}
+      </div>
+      <div class="ai-avatar ai-avatar--user" style="background:linear-gradient(135deg,${cfg.gradientFrom},${cfg.gradientTo})">
         <i class="fa-solid fa-user"></i>
       </div>
     </div>`;
 
   return `
-    <div style="display:flex;justify-content:flex-start;gap:8px;align-items:flex-end">
-      <div style="width:30px;height:30px;border-radius:50%;background:${cfg.colorLight};
-                  color:${cfg.color};display:flex;align-items:center;justify-content:center;
-                  font-size:12px;flex-shrink:0;margin-bottom:2px">
+    <div class="ai-bubble-row ai-bubble-row--ai">
+      <div class="ai-avatar ai-avatar--ai" style="background:${cfg.colorHex}18;color:${cfg.colorHex}">
         <i class="fa-solid fa-robot"></i>
       </div>
-      <div style="max-width:72%;background:white;color:var(--text);border-radius:14px 14px 14px 4px;
-                  padding:11px 15px;font-size:14px;border:1px solid var(--border);box-shadow:var(--shadow)">${txt}</div>
+      <div class="ai-bubble ai-bubble--ai">${bodyHtml}</div>
     </div>`;
 }
 
-/* ── Format AI markdown-ish text ── */
+/* ── Copy message text ── */
+function _copyAIMsg(btn) {
+  const bubble = btn.closest('.ai-bubble');
+  const text   = bubble?.querySelector('.ai-bubble__text')?.innerText || '';
+  navigator.clipboard?.writeText(text).then(() => {
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 1800);
+  });
+}
+
+/* ── Markdown-ish formatter ── */
 function _fmtAIText(text) {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^(\d+)\.\s+/gm, '<span style="font-weight:600;color:var(--primary)">$1.</span> ')
-    .replace(/^[-•]\s+/gm, '<span style="color:var(--primary);margin-right:4px">•</span> ')
-    .replace(/\n{2,}/g, '</p><p style="margin-top:10px">')
+    .replace(/`([^`]+)`/g, '<code class="ai-inline-code">$1</code>')
+    .replace(/^#{1,3}\s+(.+)/gm, '<p class="ai-heading">$1</p>')
+    .replace(/^(\d+)\.\s+(.+)/gm,
+      '<div class="ai-list-item"><span class="ai-list-num">$1</span><span>$2</span></div>')
+    .replace(/^[-•*]\s+(.+)/gm,
+      '<div class="ai-list-item"><span class="ai-list-bullet">•</span><span>$1</span></div>')
+    .replace(/\n{2,}/g, '</p><p class="ai-para">')
     .replace(/\n/g, '<br>');
 }
 
-/* ── Send a message ── */
+/* ═══════════════════════════════════════
+   Send message
+   ═══════════════════════════════════════ */
 async function _sendAIMessage(text, role) {
   const cfg   = AI_CFG[role] || AI_CFG.doctor;
   const input = document.getElementById('ai-input');
   const msg   = (text || input?.value || '').trim();
   if (!msg || _aiSending) return;
 
-  // Remove suggestions
   document.getElementById('ai-suggestions')?.remove();
-
   if (input) { input.value = ''; input.style.height = ''; }
 
-  _aiMessages.push({ role:'user', content:msg, ts:new Date() });
-  _aiMessages.push({ role:'assistant', content:'', ts:new Date(), isLoading:true });
+  _aiMessages.push({ role: 'user',      content: msg,  ts: new Date() });
+  _aiMessages.push({ role: 'assistant', content: '',   ts: new Date(), isLoading: true });
   _aiSending = true;
   _renderAIMessages(cfg);
   _setAISendBtn(true, cfg);
 
   const history = _aiMessages
     .filter(m => !m.isLoading)
-    .map(m => ({ role:m.role, content:m.content }));
+    .map(m => ({ role: m.role, content: m.content }));
 
   try {
-    const res = await fetch('/api/ai/chat', {
+    const res  = await fetch('/api/ai/chat', {
       method:  'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body:    JSON.stringify({ messages: history }),
     });
     const data = await res.json();
-    _aiMessages.pop(); // remove loading placeholder
+    _aiMessages.pop();
     if (!res.ok) throw new Error(data.error || 'AI error');
-    _aiMessages.push({ role:'assistant', content:data.reply, ts:new Date() });
+    _aiMessages.push({ role: 'assistant', content: data.reply, ts: new Date() });
   } catch (err) {
     _aiMessages.pop();
-    _aiMessages.push({ role:'assistant', content:`⚠ ${err.message || 'Unable to reach AI. Check your connection.'}`, ts:new Date() });
+    _aiMessages.push({
+      role: 'assistant',
+      content: `⚠ ${err.message || 'Unable to reach AI. Check your connection.'}`,
+      ts: new Date(),
+      isError: true,
+    });
   } finally {
     _aiSending = false;
     _setAISendBtn(false, cfg);
@@ -300,130 +360,158 @@ async function _sendAIMessage(text, role) {
 function _setAISendBtn(loading, cfg) {
   const btn = document.getElementById('ai-send-btn');
   if (!btn) return;
-  btn.disabled = loading;
-  btn.style.opacity = loading ? '0.6' : '1';
-  btn.innerHTML = loading
+  btn.disabled     = loading;
+  btn.style.opacity = loading ? '0.65' : '1';
+  btn.innerHTML    = loading
     ? '<i class="fa-solid fa-spinner fa-spin"></i>'
     : '<i class="fa-solid fa-paper-plane"></i>';
 }
 
 function _aiInputKeydown(e, role) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); _sendAIMessage(null, role); }
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    _sendAIMessage(null, role);
+  }
 }
 
 function _aiAutoResize(el) {
   el.style.height = '';
-  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
 }
 
 function _clearAIChat() {
   const role = currentUser?.role || 'doctor';
   const cfg  = AI_CFG[role] || AI_CFG.doctor;
   _aiMessages = [];
-  _aiInsight  = { content:'', loading:false, error:'' };
+  _aiInsight  = { content: '', loading: false, error: '' };
   _aiAddWelcome(cfg);
   _renderSuggestions(cfg, role);
 }
 
-/* ── Tab switching ── */
+/* ═══════════════════════════════════════
+   Tab switching
+   ═══════════════════════════════════════ */
 function _switchAITab(tab, role) {
   _aiTab = tab;
-  const cfg = AI_CFG[role] || AI_CFG.doctor;
+  const cfg      = AI_CFG[role] || AI_CFG.doctor;
   const chat     = document.getElementById('ai-chat-panel');
   const insights = document.getElementById('ai-insights-panel');
   const tabChat  = document.getElementById('ai-tab-chat');
   const tabIns   = document.getElementById('ai-tab-insights');
 
-  const activeStyle   = `background:${cfg.colorLight};color:${cfg.color};border-bottom:2px solid ${cfg.color}`;
-  const inactiveStyle = `background:white;color:var(--text3);border-bottom:2px solid transparent`;
+  [tabChat, tabIns].forEach(t => {
+    t.classList.remove('ai-tab--active');
+    t.removeAttribute('style');
+    t.setAttribute('aria-selected', 'false');
+  });
 
   if (tab === 'chat') {
     chat.style.display     = 'flex';
     insights.style.display = 'none';
-    tabChat.style.cssText  += ';' + activeStyle;
-    tabIns.style.cssText   += ';' + inactiveStyle;
+    tabChat.classList.add('ai-tab--active');
+    tabChat.style.setProperty('--tab-color', cfg.colorHex);
+    tabChat.setAttribute('aria-selected', 'true');
   } else {
     chat.style.display     = 'none';
     insights.style.display = 'flex';
-    tabIns.style.cssText   += ';' + activeStyle;
-    tabChat.style.cssText  += ';' + inactiveStyle;
+    tabIns.classList.add('ai-tab--active');
+    tabIns.style.setProperty('--tab-color', cfg.colorHex);
+    tabIns.setAttribute('aria-selected', 'true');
     if (!_aiInsight.content && !_aiInsight.loading) _loadAIInsights(cfg, role);
   }
 }
 
-/* ── Insights panel HTML ── */
+/* ═══════════════════════════════════════
+   Insights panel
+   ═══════════════════════════════════════ */
 function _renderInsightsPanel(cfg, role) {
   return `
-  <div style="background:white;border:1px solid var(--border);border-radius:var(--radius);
-       padding:28px;text-align:center;box-shadow:var(--shadow)">
-    <div style="width:60px;height:60px;border-radius:14px;background:${cfg.colorLight};
-         display:flex;align-items:center;justify-content:center;font-size:26px;
-         color:${cfg.color};margin:0 auto 12px">
+  <!-- Insights hero -->
+  <div class="ai-insights-hero" style="background:linear-gradient(135deg,${cfg.gradientFrom}14,${cfg.gradientTo}08)">
+    <div class="ai-insights-hero__icon" style="background:linear-gradient(135deg,${cfg.gradientFrom},${cfg.gradientTo})">
       <i class="fa-solid ${cfg.insightIcon}"></i>
     </div>
-    <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-.2px">${cfg.insightLabel}</div>
-    <div style="font-size:12px;color:var(--text3);margin-top:4px">AI-generated from live system data</div>
+    <div>
+      <h2 class="ai-insights-hero__title">${cfg.insightLabel}</h2>
+      <p class="ai-insights-hero__sub">AI-generated from live system data</p>
+    </div>
   </div>
-  <div id="ai-insight-card" style="background:white;border:1px solid var(--border);
-       border-left:3px solid ${cfg.color};border-radius:var(--radius);
-       padding:20px;box-shadow:var(--shadow)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:32px;height:32px;border-radius:8px;background:${cfg.colorLight};
-             display:flex;align-items:center;justify-content:center;color:${cfg.color}">
+
+  <!-- Insights card -->
+  <div class="ai-insights-card" style="--accent-color:${cfg.colorHex}">
+    <div class="ai-insights-card__header">
+      <div class="ai-insights-card__label">
+        <div class="ai-insights-card__icon" style="background:${cfg.colorHex}18;color:${cfg.colorHex}">
           <i class="fa-solid ${cfg.insightIcon}"></i>
         </div>
-        <span style="font-size:13px;font-weight:600;color:var(--text)">${cfg.insightLabel}</span>
+        <span>${cfg.insightLabel}</span>
       </div>
-      <button onclick="_loadAIInsights(AI_CFG['${role}'],'${role}')"
-        style="background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);
-               padding:5px 10px;cursor:pointer;font-size:12px;color:var(--text3);
-               display:flex;align-items:center;gap:5px">
-        <i class="fa-solid fa-sync-alt"></i> Refresh
+      <button class="ai-refresh-btn" onclick="_loadAIInsights(AI_CFG['${role}'],'${role}')">
+        <i class="fa-solid fa-arrows-rotate"></i> Refresh
       </button>
     </div>
-    <div id="ai-insight-body">
+    <div id="ai-insight-body" class="ai-insights-card__body">
       ${_renderInsightBody()}
     </div>
   </div>
-  <div style="display:flex;align-items:flex-start;gap:6px;padding:0 4px">
-    <i class="fa-solid fa-circle-info" style="color:var(--text3);font-size:11px;margin-top:2px"></i>
-    <span style="font-size:11px;color:var(--text3);line-height:1.5">
-      Insights are generated from aggregate, de-identified data and refreshed on demand.
-      Always apply professional judgement.
-    </span>
+
+  <!-- Disclaimer -->
+  <div class="ai-insights-disclaimer">
+    <i class="fa-solid fa-circle-info"></i>
+    <span>Insights are generated from aggregate, de-identified data and refreshed on demand.
+    Always apply professional judgement before acting on AI-generated content.</span>
   </div>`;
 }
 
 function _renderInsightBody() {
   if (_aiInsight.loading) return `
-    <div style="display:flex;align-items:center;gap:10px;padding:16px 0;color:var(--text3)">
-      <i class="fa-solid fa-spinner fa-spin" style="color:var(--primary)"></i>
-      <span style="font-size:13px">Analysing live data…</span>
+    <div class="ai-insight-state">
+      <div class="ai-insight-state__spinner">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+      </div>
+      <div>
+        <p class="ai-insight-state__title">Analysing live data…</p>
+        <p class="ai-insight-state__sub">This may take a few seconds</p>
+      </div>
     </div>`;
+
   if (_aiInsight.error) return `
-    <div style="display:flex;align-items:center;gap:8px;color:var(--danger);padding:10px 0">
-      <i class="fa-solid fa-circle-exclamation"></i>
-      <span style="font-size:13px">${_aiInsight.error}</span>
+    <div class="ai-insight-state ai-insight-state--error">
+      <div class="ai-insight-state__spinner ai-insight-state__spinner--error">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <p class="ai-insight-state__title">Unable to load insights</p>
+        <p class="ai-insight-state__sub">${_aiInsight.error}</p>
+      </div>
     </div>`;
+
   if (!_aiInsight.content) return `
-    <div style="color:var(--text3);font-size:13px;padding:10px 0">
-      Click <strong>Refresh</strong> to generate insights from current system data.
+    <div class="ai-insight-state">
+      <div class="ai-insight-state__spinner ai-insight-state__spinner--idle">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </div>
+      <div>
+        <p class="ai-insight-state__title">No insights yet</p>
+        <p class="ai-insight-state__sub">Click <strong>Refresh</strong> to generate insights from current system data.</p>
+      </div>
     </div>`;
-  return `<div style="font-size:13px;color:var(--text2);line-height:1.75;white-space:pre-wrap">${_fmtAIText(_aiInsight.content)}</div>`;
+
+  return `<div class="ai-insight-content">${_fmtAIText(_aiInsight.content)}</div>`;
 }
 
 async function _loadAIInsights(cfg, role) {
-  _aiInsight = { content:'', loading:true, error:'' };
+  _aiInsight = { content: '', loading: true, error: '' };
   _updateInsightBody();
   try {
-    const endpoint = cfg.insightEndpoint;
-    const res  = await fetch(endpoint, { headers:{ Authorization:`Bearer ${token}` } });
+    const res  = await fetch(cfg.insightEndpoint, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Insight error');
-    _aiInsight = { content: data.insights || data.summary || '', loading:false, error:'' };
+    _aiInsight = { content: data.insights || data.summary || '', loading: false, error: '' };
   } catch (err) {
-    _aiInsight = { content:'', loading:false, error: err.message || 'Could not load insights' };
+    _aiInsight = { content: '', loading: false, error: err.message || 'Could not load insights' };
   }
   _updateInsightBody();
 }
