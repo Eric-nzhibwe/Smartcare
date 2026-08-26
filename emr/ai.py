@@ -36,7 +36,7 @@ def _chat(system: str, user: str, max_tokens: int = 600, temperature: float = 0.
     """Low-level wrapper around Groq chat completions."""
     try:
         resp = _get_client().chat.completions.create(
-            model='llama-3.3-70b-versatile',
+            model='openai/gpt-oss-120b',
             messages=[
                 {'role': 'system', 'content': system},
                 {'role': 'user',   'content': user},
@@ -337,7 +337,7 @@ def freeform_chat(messages: list[dict], role: str) -> str:
 
     try:
         resp = _get_client().chat.completions.create(
-            model='llama-3.3-70b-versatile',
+            model='openai/gpt-oss-120b',
             messages=[{'role': 'system', 'content': system}] + messages,
             max_tokens=800,
             temperature=0.4,

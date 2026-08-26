@@ -108,7 +108,7 @@ function _renderAIShell(cfg, role) {
             <span class="ai-hero__divider">·</span>
             <span class="ai-hero__meta-badge">
               <i class="fa-solid fa-bolt" style="font-size:9px"></i>
-              Groq · LLaMA 3.3 70B
+              Groq · GPT-OSS 120B
             </span>
           </p>
         </div>
