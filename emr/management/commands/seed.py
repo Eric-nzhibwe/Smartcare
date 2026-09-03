@@ -144,14 +144,12 @@ class Command(BaseCommand):
             obj.role         = u['role']
             obj.facility     = u['facility']
             obj.facility_ref = facility_map.get(u['facility'])
-            # Only reset the password on first creation to preserve any post-deploy changes
-            if created:
-                obj.set_password(u['password'])
+            # Always update the password so seed changes take effect on re-deploy
+            obj.set_password(u['password'])
             obj.save()
             user_map[u['username']] = obj
             self.stdout.write(
-                f"  {'Created' if created else 'Exists '} user: {u['username']}"
-                + (' (password set)' if created else ' (password unchanged)')
+                f"  {'Created' if created else 'Updated'} user: {u['username']} (password set)"
             )
 
         default_clinician = user_map.get('doctor')
@@ -190,4 +188,4 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(self.style.SUCCESS('\n✅  Seed complete.'))
-        self.stdout.write('   Login: doctor / Doctor#2025  |  nurse / Nurse#2025  |  admin / Admin#2025')
+        self.stdout.write('   Login: doctor / Doctor#2026  |  nurse / Nurse#2026  |  admin / Admin#2026')
