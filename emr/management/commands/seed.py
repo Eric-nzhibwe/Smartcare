@@ -27,10 +27,10 @@ FACILITIES = [
 ]
 
 USERS = [
-    dict(name='Dr. Mulenga Banda',  username='doctor',  password='Doctor#2025',  role='doctor', facility='UTH Lusaka'),
-    dict(name='Nurse Chanda Phiri', username='nurse',   password='Nurse#2025',   role='nurse',  facility='Chipata General'),
-    dict(name='Admin User',         username='admin',   password='Admin#2025',   role='admin',  facility='MoH Headquarters'),
-    dict(name='Dr. Namwinga Lungu', username='doctor2', password='Doctor#2025',  role='doctor', facility='Ndola Central'),
+    dict(name='Dr. Mulenga Banda',  username='doctor',  password='Doctor#2026',  role='doctor', facility='UTH Lusaka'),
+    dict(name='Nurse Chanda Phiri', username='nurse',   password='Nurse#2026',   role='nurse',  facility='Chipata General'),
+    dict(name='Admin User',         username='admin',   password='Admin#2026',   role='admin',  facility='MoH Headquarters'),
+    dict(name='Dr. Namwinga Lungu', username='doctor2', password='Doctor#2026',  role='doctor', facility='Ndola Central'),
 ]
 
 PATIENTS = [
