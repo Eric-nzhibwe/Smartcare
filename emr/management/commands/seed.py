@@ -6,10 +6,10 @@ Usage:
     python manage.py seed --flush   # clears existing data first
 
 Demo credentials (passwords meet the 8-char, non-common validator requirements):
-    doctor  / Doctor#2025
-    nurse   / Nurse#2025
-    admin   / Admin#2025
-    doctor2 / Doctor#2025
+    doctor  / Doctor#2026
+    nurse   / Nurse#2026
+    admin   / Admin#2026
+    doctor2 / Doctor#2026
 """
 
 from django.core.management.base import BaseCommand
