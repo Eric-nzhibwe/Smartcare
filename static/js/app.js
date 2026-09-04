@@ -132,18 +132,61 @@ function navigate(page) {
 
   document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
 
-  /* Spinner while loading */
-  document.getElementById('page-content').innerHTML = `
-    <div class="loading">
-      <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;color:var(--primary);display:block;margin-bottom:10px"></i>
-      Loading…
-    </div>`;
+  /* Skeleton while loading — role-aware */
+  const role = currentUser?.role || 'doctor';
+  document.getElementById('page-content').innerHTML = _skeletonFor(page, role);
 
   closeSidebar();
 
   /* Route to the correct render function */
   const handler = PAGES[page];
   if (handler) handler();
+}
+
+/* ── Skeleton screens ── */
+function _skeletonFor(page, role) {
+  const pulse = `<div class="skel-pulse"></div>`;
+
+  if (page === 'dashboard') {
+    // Banner skeleton
+    const banner = `<div class="skel-banner">${pulse}</div>`;
+
+    // 4 stat cards
+    const stats = `<div class="stats-grid">
+      ${[0,1,2,3].map(()=>`<div class="stat-card skel-card">${pulse}<div class="skel-line skel-line--lg"></div><div class="skel-line skel-line--sm"></div></div>`).join('')}
+    </div>`;
+
+    // 2-col content rows
+    const row = `<div class="grid-2 mb-4">
+      <div class="card skel-card">${pulse}<div class="skel-line"></div><div class="skel-line skel-line--sm"></div><div class="skel-line"></div><div class="skel-line skel-line--sm"></div></div>
+      <div class="card skel-card">${pulse}<div class="skel-line"></div><div class="skel-line skel-line--sm"></div><div class="skel-line"></div><div class="skel-line skel-line--sm"></div></div>
+    </div>`;
+
+    return banner + stats + row + row;
+  }
+
+  if (page === 'patients' || page === 'encounters') {
+    const toolbar = `<div class="page-toolbar"><div class="skel-search">${pulse}</div><div class="skel-btn">${pulse}</div></div>`;
+    const table   = `<div class="card skel-card">
+      ${[0,1,2,3,4,5].map(()=>`<div class="skel-row">${pulse}</div>`).join('')}
+    </div>`;
+    return toolbar + table;
+  }
+
+  if (page === 'reports') {
+    return `<div class="skel-banner">${pulse}</div>
+      <div class="grid-2 mb-4">
+        <div class="card skel-card">${pulse}<div class="skel-line"></div><div class="skel-line skel-line--sm"></div><div class="skel-line"></div></div>
+        <div class="card skel-card">${pulse}<div class="skel-line"></div><div class="skel-line skel-line--sm"></div><div class="skel-line"></div></div>
+      </div>
+      <div class="card skel-card">${pulse}<div class="skel-line"></div><div class="skel-line skel-line--sm"></div></div>`;
+  }
+
+  // Generic fallback
+  return `<div class="loading">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;color:var(--primary);display:block;margin-bottom:10px"></i>
+    Loading…
+  </div>`;
 }
 
 /* Page handler map — populated by each page script */

@@ -363,6 +363,15 @@ textarea{resize:vertical;min-height:70px}
 @media(max-width:640px){
   .vitals-strip{grid-template-columns:repeat(2,1fr)}
 }
+
+/* ── Skeleton loading screens ── */
+@keyframes skel-shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.skel-banner,.skel-card,.skel-search,.skel-btn,.skel-row{position:relative;overflow:hidden;background:#e2e8f0;border-radius:var(--radius)}
+.skel-banner::after,.skel-card::after,.skel-search::after,.skel-btn::after,.skel-row::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.55) 50%,transparent 100%);background-size:600px 100%;animation:skel-shimmer 1.4s infinite linear}
+.skel-banner{height:72px;margin-bottom:20px}
+.skel-card{min-height:120px;border:none!important;box-shadow:none!important;display:flex;flex-direction:column;gap:8px;justify-content:center;padding:16px 18px}
+.skel-row{height:46px;background:#f1f5f9;border-bottom:1px solid var(--border);border-radius:0}
+.stats-grid .skel-card{border-left:3px solid #cbd5e1!important}
 </style>
 <body>
 
@@ -470,6 +479,7 @@ textarea{resize:vertical;min-height:70px}
 <script src="/static/js/dashboard.nurse.js"></script>
 <script src="/static/js/dashboard.admin.js"></script>
 <script src="/static/js/pages.js"></script>
+<script src="/static/js/reports.js"></script>
 <script src="/static/js/ai.js"></script>
 <!-- role-dashboards.js removed — was duplicate dead code -->
 <script>
@@ -665,13 +675,49 @@ function navigate(page) {
     encounters: 'Clinical Encounters', reports: 'Reports & Analytics', users: 'User Management',
   };
   document.getElementById('page-title').textContent = titles[page] || page;
-  document.getElementById('page-content').innerHTML = `
-    <div class="loading">
-      <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;color:var(--primary);display:block;margin-bottom:10px"></i>
-      Loading…
-    </div>`;
+  document.getElementById('page-content').innerHTML = _skeletonFor(page);
   closeSidebar();
   pages_map[page]();
+}
+
+/* ── skeleton screens ── */
+function _skeletonFor(page) {
+  const p = `<div class="skel-pulse"></div>`;
+  const line = (w='80%',h='12px') =>
+    `<div class="skel-line" style="width:${w};height:${h};border-radius:6px;background:rgba(0,0,0,.07);margin:6px 0"></div>`;
+
+  if (page === 'dashboard') {
+    const banner = `<div class="skel-banner"></div>`;
+    const stats  = `<div class="stats-grid">
+      ${[0,1,2,3].map(()=>`<div class="stat-card skel-card">${line('40%','28px')}${line('60%','10px')}</div>`).join('')}
+    </div>`;
+    const row = `<div class="grid-2 mb-4">
+      <div class="card skel-card" style="min-height:140px">${line('55%','14px')}${line('80%','10px')}${line('70%','10px')}${line('65%','10px')}</div>
+      <div class="card skel-card" style="min-height:140px">${line('55%','14px')}${line('80%','10px')}${line('70%','10px')}${line('65%','10px')}</div>
+    </div>`;
+    return banner + stats + row + row;
+  }
+  if (page === 'patients' || page === 'encounters') {
+    const toolbar = `<div class="page-toolbar" style="margin-bottom:16px">
+      <div class="skel-search" style="flex:1;max-width:380px;height:38px"></div>
+      <div class="skel-btn" style="width:140px;height:36px"></div>
+    </div>`;
+    const rows = [0,1,2,3,4,5].map(()=>
+      `<div class="skel-row" style="height:46px;background:#f1f5f9;border-bottom:1px solid var(--border)"></div>`
+    ).join('');
+    return toolbar + `<div class="card" style="overflow:hidden">${rows}</div>`;
+  }
+  if (page === 'reports') {
+    const row = `<div class="grid-2 mb-4">
+      <div class="card skel-card" style="min-height:120px">${line('55%','14px')}${line('80%','10px')}${line('70%','10px')}</div>
+      <div class="card skel-card" style="min-height:120px">${line('55%','14px')}${line('80%','10px')}${line('70%','10px')}</div>
+    </div>`;
+    return `<div class="skel-banner"></div>` + row + row;
+  }
+  return `<div class="loading">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;color:var(--primary);display:block;margin-bottom:10px"></i>
+    Loading…
+  </div>`;
 }
 
 /* ── mobile sidebar ── */

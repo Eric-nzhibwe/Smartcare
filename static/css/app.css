@@ -1095,6 +1095,81 @@ textarea { resize: vertical; min-height: 70px; }
 .vs-input  { padding: 7px 10px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; outline: none; width: 100%; transition: border-color .15s, box-shadow .15s; }
 .vs-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,168,120,.1); }
 
+/* ── Skeleton loading screens ── */
+@keyframes skel-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.skel-pulse {
+  display: none; /* pulse used as spacer — shimmer is on container */
+}
+.skel-card,
+.skel-banner,
+.skel-search,
+.skel-btn,
+.skel-row {
+  position: relative;
+  overflow: hidden;
+  background: #e2e8f0;
+  border-radius: var(--radius);
+}
+.skel-card::after,
+.skel-banner::after,
+.skel-search::after,
+.skel-btn::after,
+.skel-row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.55) 50%, transparent 100%);
+  background-size: 600px 100%;
+  animation: skel-shimmer 1.4s infinite linear;
+}
+.skel-banner {
+  height: 72px;
+  margin-bottom: 20px;
+  background: #e2e8f0;
+}
+.skel-card {
+  min-height: 120px;
+  padding: 16px 18px;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+}
+.skel-line {
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(0,0,0,.08);
+  width: 80%;
+}
+.skel-line--lg  { height: 28px; width: 50%; }
+.skel-line--sm  { height: 10px; width: 60%; }
+.skel-row {
+  height: 42px;
+  margin-bottom: 1px;
+  border-radius: 0;
+  background: #f1f5f9;
+}
+.skel-row:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+.skel-row:last-child  { border-radius: 0 0 var(--radius) var(--radius); margin-bottom: 0; }
+.skel-search {
+  height: 38px;
+  flex: 1;
+  max-width: 380px;
+  background: #e2e8f0;
+}
+.skel-btn {
+  height: 36px;
+  width: 140px;
+  background: #e2e8f0;
+}
+/* stats grid skeletons keep their border-left accent */
+.stats-grid .skel-card { border-left: 3px solid #cbd5e1 !important; }
+
 /* ── Page fade-in ── */
 @keyframes ai-fade-in { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
 .ai-panel-fade { animation: ai-fade-in .28s ease; }
