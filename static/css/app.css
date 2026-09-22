@@ -478,6 +478,7 @@ textarea { resize: vertical; min-height: 70px; }
 }
 .ai-tab--active {
   color: var(--tab-color, var(--primary));
+  background: rgba(15, 76, 129, 0.1);
   background: color-mix(in srgb, var(--tab-color, var(--primary)) 10%, white);
   font-weight: 600;
   box-shadow: 0 1px 6px rgba(0,0,0,.1);
@@ -710,7 +711,9 @@ textarea { resize: vertical; min-height: 70px; }
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 .ai-chip:hover {
+  background: rgba(15, 76, 129, 0.05);
   background: color-mix(in srgb, var(--chip-color) 5%, white);
+  border-color: rgba(15, 76, 129, 0.35);
   border-color: color-mix(in srgb, var(--chip-color) 35%, transparent);
   color: var(--text);
   transform: translateY(-2px);
@@ -720,6 +723,7 @@ textarea { resize: vertical; min-height: 70px; }
   width: 32px;
   height: 32px;
   border-radius: 9px;
+  background: rgba(15, 76, 129, 0.12);
   background: color-mix(in srgb, var(--chip-color) 12%, white);
   color: var(--chip-color);
   display: flex;
@@ -730,7 +734,9 @@ textarea { resize: vertical; min-height: 70px; }
   transition: all .2s;
 }
 .ai-chip:hover .ai-chip__icon {
+  background: rgba(15, 76, 129, 0.18);
   background: color-mix(in srgb, var(--chip-color) 18%, white);
+  box-shadow: 0 2px 8px rgba(15, 76, 129, 0.3);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--chip-color) 30%, transparent);
 }
 .ai-chip__text { flex: 1; line-height: 1.45; font-size: 12.5px; }
@@ -784,7 +790,8 @@ textarea { resize: vertical; min-height: 70px; }
 .ai-textarea::placeholder { color: var(--text3); }
 .ai-textarea:focus {
   border-color: var(--focus-color, var(--primary));
-  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--focus-color, var(--primary)) 13%, transparent),
+  box-shadow: 0 0 0 3.5px rgba(15, 76, 129, 0.13),
+              0 0 0 3.5px color-mix(in srgb, var(--focus-color, var(--primary)) 13%, transparent),
               0 1px 4px rgba(0,0,0,.05);
 }
 .ai-input-hint {
