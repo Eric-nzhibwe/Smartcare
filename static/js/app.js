@@ -96,26 +96,31 @@ function _initShell() {
   }
 
   /* Sidebar user block */
-  document.getElementById('sidebar-avatar').textContent = initials(currentUser.name);
-  document.getElementById('sidebar-name').textContent   = currentUser.name;
-  document.getElementById('sidebar-role').textContent   = role.toUpperCase();
+  const sidebarAvatar = document.getElementById('sidebar-avatar');
+  const sidebarName = document.getElementById('sidebar-name');
+  const sidebarRole = document.getElementById('sidebar-role');
+  if (sidebarAvatar) sidebarAvatar.textContent = initials(currentUser.name);
+  if (sidebarName) sidebarName.textContent = currentUser.name;
+  if (sidebarRole) sidebarRole.textContent = role.toUpperCase();
 
   /* Sidebar nav */
-  document.getElementById('sidebar-nav').innerHTML = nav;
+  const sidebarNav = document.getElementById('sidebar-nav');
+  if (sidebarNav) sidebarNav.innerHTML = nav;
 
   /* Topbar meta */
-  document.getElementById('topbar-facility').textContent =
-    currentUser.facility || '';
-  document.getElementById('topbar-date').textContent =
+  const topbarFacility = document.getElementById('topbar-facility');
+  const topbarDate = document.getElementById('topbar-date');
+  if (topbarFacility) topbarFacility.textContent = currentUser.facility || '';
+  if (topbarDate) topbarDate.textContent =
     new Date().toLocaleDateString('en-ZM', {
       weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
     });
 
   /* Role-specific topbar controls */
-  document.getElementById('qs-wrap').style.display =
-    role === 'doctor' ? 'flex' : 'none';
-  document.getElementById('triage-btn-wrap').style.display =
-    role === 'nurse' ? 'inline-flex' : 'none';
+  const qsWrap = document.getElementById('qs-wrap');
+  const triageBtnWrap = document.getElementById('triage-btn-wrap');
+  if (qsWrap) qsWrap.style.display = role === 'doctor' ? 'flex' : 'none';
+  if (triageBtnWrap) triageBtnWrap.style.display = role === 'nurse' ? 'inline-flex' : 'none';
 
   /* Land on the dashboard */
   navigate('dashboard');
@@ -130,11 +135,13 @@ function navigate(page) {
     el.classList.toggle('active', el.dataset.page === page);
   });
 
-  document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
+  const pageTitle = document.getElementById('page-title');
+  if (pageTitle) pageTitle.textContent = PAGE_TITLES[page] || page;
 
   /* Skeleton while loading — role-aware */
   const role = currentUser?.role || 'doctor';
-  document.getElementById('page-content').innerHTML = _skeletonFor(page, role);
+  const pageContent = document.getElementById('page-content');
+  if (pageContent) pageContent.innerHTML = _skeletonFor(page, role);
 
   closeSidebar();
 
@@ -211,6 +218,7 @@ function closeSidebar() {
 /* ── Toast ── */
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
+  if (!el) return;
   el.textContent  = msg;
   el.className    = `toast show${type ? ' ' + type : ''}`;
   clearTimeout(el._timer);
@@ -219,13 +227,18 @@ function toast(msg, type = '') {
 
 /* ── Modal ── */
 function openModal(title, body, footer = '') {
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML    = body;
-  document.getElementById('modal-footer').innerHTML  = footer;
-  document.getElementById('modal-overlay').classList.add('open');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+  const modalFooter = document.getElementById('modal-footer');
+  const modalOverlay = document.getElementById('modal-overlay');
+  if (modalTitle) modalTitle.textContent = title;
+  if (modalBody) modalBody.innerHTML = body;
+  if (modalFooter) modalFooter.innerHTML = footer;
+  if (modalOverlay) modalOverlay.classList.add('open');
 }
 function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
+  const modalOverlay = document.getElementById('modal-overlay');
+  if (modalOverlay) modalOverlay.classList.remove('open');
 }
 
 /* ── Shared helpers ── */

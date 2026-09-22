@@ -1,6 +1,19 @@
 /* ── Reset & tokens ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Remove default focus outlines globally; re-add accessible focus-visible below */
+button, a, [role="button"], [tabindex]:not([tabindex="-1"]) {
+  outline: none;
+}
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 :root {
   --bg:            #f0f4f8;
   --surface:       #fff;

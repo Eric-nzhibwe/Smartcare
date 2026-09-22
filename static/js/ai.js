@@ -19,6 +19,7 @@ const AI_CFG = {
     gradientTo:      '#1a69b3',
     label:           'Clinical AI Assistant',
     subtitle:        'Differential diagnoses · Decision support',
+    greeting:        'clinical decision-support assistant for doctors',
     icon:            'fa-user-doctor',
     insightLabel:    'Clinical Insights',
     insightIcon:     'fa-stethoscope',
@@ -38,6 +39,7 @@ const AI_CFG = {
     gradientTo:      '#00956a',
     label:           'Triage AI Assistant',
     subtitle:        'Patient care coordination · Triage support',
+    greeting:        'triage and patient-care assistant for nurses',
     icon:            'fa-user-nurse',
     insightLabel:    'Triage Summary',
     insightIcon:     'fa-clipboard-list',
@@ -57,6 +59,7 @@ const AI_CFG = {
     gradientTo:      '#b45309',
     label:           'Health Analytics AI',
     subtitle:        'Operational insights · System performance',
+    greeting:        'health analytics and operations assistant for administrators',
     icon:            'fa-shield-halved',
     insightLabel:    'System Insights',
     insightIcon:     'fa-chart-line',
@@ -77,7 +80,8 @@ function navigateAI() {
   const role = currentUser?.role || 'doctor';
   const cfg  = AI_CFG[role] || AI_CFG.doctor;
   currentPage = 'ai';
-  document.getElementById('page-title').textContent = cfg.label;
+  const pageTitle = document.getElementById('page-title');
+  if (pageTitle) pageTitle.textContent = 'AI Analytics';
   if (typeof setActiveNav === 'function') setActiveNav('ai');
   _aiMessages = [];
   _aiTab      = 'chat';
@@ -216,7 +220,7 @@ function _renderSuggestions(cfg, role) {
 function _aiAddWelcome(cfg) {
   _aiMessages = [{
     role:    'assistant',
-    content: `Hello! I'm **SmartCare AI**, your ${cfg.subtitle.toLowerCase()}.\n\nHow can I assist you today?`,
+    content: `Hello! I'm **SmartCare AI**, your ${cfg.greeting}.\n\nHow can I assist you today?`,
     ts:      new Date(),
   }];
   _renderAIMessages(cfg);

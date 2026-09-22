@@ -7,7 +7,9 @@
 async function renderPatients(q='') {
   const patients = await api(`/api/patients?q=${encodeURIComponent(q)}`);
   if (!patients) return;
-  document.getElementById('page-content').innerHTML = `
+  const pageContent = document.getElementById('page-content');
+  if (!pageContent) return;
+  pageContent.innerHTML = `
   <div class="page-toolbar">
     <div class="search-bar" style="max-width:420px;flex:1">
       <i class="fa-solid fa-magnifying-glass"></i>
@@ -72,7 +74,9 @@ async function viewPatient(pid) {
   const encs = data.encounters;
   const hasAllergy = p.allergies && p.allergies !== 'None' && p.allergies !== '';
 
-  document.getElementById('page-content').innerHTML = `
+  const pageContent = document.getElementById('page-content');
+  if (!pageContent) return;
+  pageContent.innerHTML = `
   <div style="margin-bottom:14px">
     <button class="btn btn-outline btn-sm" onclick="navigate('patients')">
       <i class="fa-solid fa-arrow-left"></i> Back to patients
@@ -243,8 +247,10 @@ async function showEditPatientModal(pid) {
   const data = await api(`/api/patients/${pid}`);
   if (!data) return;
   showRegisterModal(data.patient);
-  document.getElementById('modal-title').textContent = 'Edit Patient';
-  document.getElementById('modal-footer').innerHTML =
+  const modalTitle = document.getElementById('modal-title');
+  const modalFooter = document.getElementById('modal-footer');
+  if (modalTitle) modalTitle.textContent = 'Edit Patient';
+  if (modalFooter) modalFooter.innerHTML =
     `<button class="btn btn-outline" onclick="closeModal()"><i class="fa-solid fa-xmark"></i> Cancel</button>
      <button class="btn btn-primary" onclick="submitEditPatient(${pid})"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>`;
 }
@@ -306,7 +312,9 @@ async function renderEncounters(page = 1) {
     </div>
   </div>` : '';
 
-  document.getElementById('page-content').innerHTML = `
+  const pageContent = document.getElementById('page-content');
+  if (!pageContent) return;
+  pageContent.innerHTML = `
   <div class="page-toolbar">
     <h3 class="section-title" style="margin:0">Clinical Encounters
       <span style="font-weight:400;font-size:12px;color:var(--text3);margin-left:6px">${total} total</span>
@@ -383,10 +391,10 @@ function showEncounterModalSearch() {
 }
 
 async function searchForEnc(q) {
-  if (q.length < 2) { document.getElementById('enc-search-results').innerHTML = ''; return; }
-  const patients = await api(`/api/patients?q=${encodeURIComponent(q)}`);
   const el = document.getElementById('enc-search-results');
   if (!el) return;
+  if (q.length < 2) { el.innerHTML = ''; return; }
+  const patients = await api(`/api/patients?q=${encodeURIComponent(q)}`);
   if (!patients || patients.length === 0) {
     el.innerHTML = '<p style="font-size:13px;color:var(--text3)">No patients found</p>'; return;
   }
@@ -465,7 +473,9 @@ async function renderUsers() {
   const users = await api('/api/users');
   if (!users) return;
   const isAdmin = currentUser.role === 'admin';
-  document.getElementById('page-content').innerHTML = `
+  const pageContent = document.getElementById('page-content');
+  if (!pageContent) return;
+  pageContent.innerHTML = `
   <div class="page-toolbar">
     <h3 class="section-title" style="margin:0">${users.length} System Users</h3>
     ${isAdmin ? `<button class="btn btn-primary" onclick="showAddUserModal()"><i class="fa-solid fa-user-plus"></i> Add User</button>` : ''}

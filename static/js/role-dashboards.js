@@ -32,7 +32,7 @@ function renderNurseDashboard(d) {
     <div class="stat-card warn"><div class="label"><i class="fa-solid fa-heart-pulse fa-fw"></i> Vitals Pending</div><div class="value">${s.vitals_pending}</div><div class="sub">Patients not yet triaged</div></div>
     <div class="stat-card danger"><div class="label"><i class="fa-solid fa-triangle-exclamation fa-fw"></i> Allergy Alerts</div><div class="value">${s.allergy_count}</div><div class="sub">Known allergies on file</div></div>
   </div>
-  <div id="vitals-panel" style="display:none" class="card mb-4" style="border:2px solid var(--accent)">
+  <div id="vitals-panel" class="card mb-4" style="display:none;border:2px solid var(--accent)">
     <div class="card-header" style="background:var(--accent-light)">
       <div><h3 style="color:var(--accent)"><i class="fa-solid fa-heart-pulse fa-fw"></i> Quick Vitals — <span id="vp-name"></span></h3>
         <div style="font-size:12px;color:var(--text3);margin-top:2px" id="vp-sub"></div></div>
@@ -91,10 +91,13 @@ function _openVitalsForIdx(idx) {
   const q = _nurseTriageQueue;
   if (!q.length) return;
   const p = q[idx];
-  document.getElementById('vp-name').textContent = p.patient_name;
-  document.getElementById('vp-sub').textContent =
+  const vpName = document.getElementById('vp-name');
+  const vpSub = document.getElementById('vp-sub');
+  const vpQueueInfo = document.getElementById('vp-queue-info');
+  if (vpName) vpName.textContent = p.patient_name;
+  if (vpSub) vpSub.textContent =
     `${p.smart_id} · ${p.age} yrs · ${p.has_allergy ? '⚠ '+p.allergies : 'No known allergies'}`;
-  document.getElementById('vp-queue-info').textContent =
+  if (vpQueueInfo) vpQueueInfo.textContent =
     `${q.length - idx - 1} more pending after this`;
   ['vp-temp','vp-pulse','vp-bp','vp-weight','vp-height','vp-spo2'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
@@ -110,14 +113,17 @@ function _openVitalsForIdx(idx) {
 
 function openVitalsPanel(name, encId) {
   const p = _nurseTriageQueue.find(x=>x.patient_name===name)||{smart_id:'',allergies:''};
-  document.getElementById('vp-name').textContent = name;
-  document.getElementById('vp-sub').textContent = `${p.smart_id} ${p.has_allergy?'· ⚠ '+p.allergies:''}`;
+  const vpName = document.getElementById('vp-name');
+  const vpSub = document.getElementById('vp-sub');
+  const vpQueueInfo = document.getElementById('vp-queue-info');
+  if (vpName) vpName.textContent = name;
+  if (vpSub) vpSub.textContent = `${p.smart_id} ${p.has_allergy?'· ⚠ '+p.allergies:''}`;
   ['vp-temp','vp-pulse','vp-bp','vp-weight','vp-height','vp-spo2'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const panel=document.getElementById('vitals-panel');
   if (panel) { panel.style.display='block'; panel.scrollIntoView({behavior:'smooth',block:'center'}); }
-  document.getElementById('vp-queue-info').textContent='';
+  if (vpQueueInfo) vpQueueInfo.textContent='';
   // store encounter id for PATCH
   if (panel) panel.dataset.encId = encId||'';
 }
@@ -130,21 +136,28 @@ function closeVitalsPanel() {
 async function saveVitalsAndNext() {
   const panel = document.getElementById('vitals-panel');
   const encId = panel ? panel.dataset.encId : null;
-  const temp  = document.getElementById('vp-temp').value;
-  const pulse = document.getElementById('vp-pulse').value;
-  const bp    = document.getElementById('vp-bp').value;
-  const weight = document.getElementById('vp-weight').value;
-  const height = document.getElementById('vp-height').value;
-  const spo2  = document.getElementById('vp-spo2').value;
+  const tempEl = document.getElementById('vp-temp');
+  const pulseEl = document.getElementById('vp-pulse');
+  const bpEl = document.getElementById('vp-bp');
+  const weightEl = document.getElementById('vp-weight');
+  const heightEl = document.getElementById('vp-height');
+  const spo2El = document.getElementById('vp-spo2');
+  const temp  = tempEl ? tempEl.value : '';
+  const pulse = pulseEl ? pulseEl.value : '';
+  const bp    = bpEl ? bpEl.value : '';
+  const weight = weightEl ? weightEl.value : '';
+  const height = heightEl ? heightEl.value : '';
+  const spo2  = spo2El ? spo2El.value : '';
   if (!temp && !pulse && !bp) { toast('Enter at least one vital sign', 'error'); return; }
   if (encId) {
     await api(`/api/encounters/${encId}/vitals`, {
       method:'PATCH',
-      body: JSON.stringify({temperature:temp||null,pulse:pulse||null,blood_pressure:bp||null,
+      body:JSON.stringify({temperature:temp||null,pulse:pulse||null,blood_pressure:bp||null,
                             weight:weight||null,height:height||null,oxygen_sat:spo2||null})
     });
   }
-  const name = document.getElementById('vp-name').textContent;
+  const vpName = document.getElementById('vp-name');
+  const name = vpName ? vpName.textContent : '';
   _nurseTriageIdx++;
   if (_triageModeOn && _nurseTriageIdx < _nurseTriageQueue.length) {
     _openVitalsForIdx(_nurseTriageIdx);
@@ -430,13 +443,14 @@ async function _loadAdminDQ() {
 }
 
 function clearAdminFilter() {
-  document.getElementById('admin-filter-bar').style.display = 'none';
+  const bar = document.getElementById('admin-filter-bar');
+  if (bar) bar.style.display = 'none';
 }
 
 // ── Doctor Quick Search ───────────────────────────────────────────────────────
 function handleQuickSearch(val) {
   const box = document.getElementById('qs-results');
-  if (!val || val.trim().length < 2) { box.style.display='none'; box.innerHTML=''; return; }
+  if (!val || val.trim().length < 2) { if (box) { box.style.display='none'; box.innerHTML=''; } return; }
   api(`/api/patients?q=${encodeURIComponent(val)}`).then(patients => {
     if (!box) return;
     if (!patients || !patients.length) {
@@ -448,7 +462,7 @@ function handleQuickSearch(val) {
         <div class="qsr-avatar">${initials(p.first_name+' '+p.last_name)}</div>
         <div class="qsr-body">
           <div class="qsr-name">${p.first_name} ${p.last_name}</div>
-          <div class="qsr-meta">${p.smart_id} · ${age(p.date_of_birth)} yrs · ${p.gender}
+          <div class="qsr-meta">${p.smart_id} · ${age(p.date_of_birth)} yrs
             ${p.allergies&&p.allergies!=='None'?`<span class="badge badge-warn" style="margin-left:4px;font-size:10px"><i class="fa-solid fa-triangle-exclamation"></i> ${p.allergies}</span>`:''}
           </div>
         </div>
