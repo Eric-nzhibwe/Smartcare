@@ -3,12 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta http-equiv="x-dns-prefetch-control" content="on">
 <title>SmartCare EMR — Zambia</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com">
+<link rel="dns-prefetch" href="//fonts.gstatic.com">
+<link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+<link
+  href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+  media="print"
+  onload="this.media='all'">
+<noscript>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+</noscript>
+
+<link
+  rel="preload"
+  as="style"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+  media="print"
+  onload="this.media='all'">
+<noscript>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer">
+</noscript>
+
+<!-- app.css — full UI suite, loads async after first paint so login renders instantly -->
+<link
+  rel="preload"
+  as="style"
+  href="/static/css/app.css"
+  onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="/static/css/app.css">
+</noscript>
+
 <style>
-/* ── reset & design tokens ── */
-*{box-sizing:border-box;margin:0;padding:0}
+/* ══════════════════════════════════════════
+   CRITICAL FIRST-PAINT CSS — inlined so the
+   page renders instantly BEFORE any CDN
+   download completes. Rest is in /static/css/
+   ══════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#f0f4f8;--surface:#fff;--surface2:#f7f9fc;
   --border:#e2e8f0;--border2:#cbd5e1;
@@ -18,12 +75,17 @@
   --warn:#d97706;--warn-light:#fffbeb;
   --text:#0f172a;--text2:#475569;--text3:#94a3b8;
   --radius:10px;--radius-sm:6px;
-  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
-  --shadow-md:0 4px 12px rgba(0,0,0,.1);
   --sidebar-w:224px;
 }
 html,body{height:100%}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%}
+body{
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;
+  -webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;
+}
+html.wf-active body,html.fonts-loaded body{font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+code,pre,tt,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+html.wf-active code,html.wf-active pre,html.wf-active tt,html.wf-active .mono{font-family:'DM Mono',ui-monospace,SFMono-Regular,monospace}
 </style>
 <style>
 /* ── login screen ── */
@@ -475,14 +537,14 @@ textarea{resize:vertical;min-height:70px}
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="/static/js/dashboard.doctor.js"></script>
-<script src="/static/js/dashboard.nurse.js"></script>
-<script src="/static/js/dashboard.admin.js"></script>
-<script src="/static/js/pages.js"></script>
-<script src="/static/js/reports.js"></script>
-<script src="/static/js/ai.js"></script>
+<script src="/static/js/dashboard.doctor.js" defer></script>
+<script src="/static/js/dashboard.nurse.js" defer></script>
+<script src="/static/js/dashboard.admin.js" defer></script>
+<script src="/static/js/pages.js" defer></script>
+<script src="/static/js/reports.js" defer></script>
+<script src="/static/js/ai.js" defer></script>
 <!-- role-dashboards.js removed — was duplicate dead code -->
-<script>
+<script defer>
 /* ═══════════════════════════════════════════════════════
    APP CORE — auth, routing, helpers
    ═══════════════════════════════════════════════════════ */

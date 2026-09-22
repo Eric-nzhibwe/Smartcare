@@ -101,7 +101,19 @@ USE_TZ        = True
 STATIC_URL        = '/static/'
 STATIC_ROOT       = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS  = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# ── WhiteNoise aggressive caching ────────────────────────────────────────────
+# Manifest storage adds a content hash to every static file's name (e.g.
+# app.abc123.css). WhiteNoise then marks these hashed files as IMMUTABLE so
+# browsers + CDNs cache them for 1 YEAR — zero revalidation on repeat visits.
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# 7-day cache for anything NOT covered by the manifest (rare edge cases).
+WHITENOISE_MAX_AGE = 7 * 24 * 60 * 60
+
+# Automatically serve hashed files with Cache-Control: immutable
+# (only available in whitenoise >= 6.0; failsafe on older versions below)
+WHITENOISE_IMMUTABLE_FILE_TEST = lambda url, headers: True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

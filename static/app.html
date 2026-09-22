@@ -3,10 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="x-dns-prefetch-control" content="on">
   <title>SmartCare EMR</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="/static/css/app.css">
+
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link rel="dns-prefetch" href="//fonts.gstatic.com">
+  <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'">
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet">
+  </noscript>
+
+  <link
+    rel="preload"
+    as="style"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer">
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+    media="print"
+    onload="this.media='all'">
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer">
+  </noscript>
+
+  <link
+    rel="preload"
+    as="style"
+    href="/static/css/app.css"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="/static/css/app.css">
+  </noscript>
 </head>
 <body>
 
@@ -90,14 +137,15 @@
   <!-- Toast -->
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <!-- Scripts: auth first (shared state), then role dashboards, then pages -->
-  <script src="/static/js/auth.js"></script>
-  <script src="/static/js/dashboard.doctor.js"></script>
-  <script src="/static/js/dashboard.nurse.js"></script>
-  <script src="/static/js/dashboard.admin.js"></script>
-  <script src="/static/js/pages.js"></script>
-  <script src="/static/js/reports.js"></script>
-  <script src="/static/js/app.js"></script>
+  <!-- Scripts: auth first (shared state), then role dashboards, then pages
+       defer = parse HTML in parallel, execute in order after DOM is parsed -->
+  <script src="/static/js/auth.js" defer></script>
+  <script src="/static/js/dashboard.doctor.js" defer></script>
+  <script src="/static/js/dashboard.nurse.js" defer></script>
+  <script src="/static/js/dashboard.admin.js" defer></script>
+  <script src="/static/js/pages.js" defer></script>
+  <script src="/static/js/reports.js" defer></script>
+  <script src="/static/js/app.js" defer></script>
 
 </body>
 </html>
