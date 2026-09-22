@@ -250,7 +250,7 @@ function _renderBubble(m, cfg) {
   if (m.isLoading) {
     return `
     <div class="ai-bubble-row ai-bubble-row--ai">
-      <div class="ai-avatar ai-avatar--ai" style="background:${cfg.colorHex}18;color:${cfg.colorHex}">
+      <div class="ai-avatar ai-avatar--ai">
         <i class="fa-solid fa-robot"></i>
       </div>
       <div class="ai-bubble ai-bubble--ai">
@@ -263,13 +263,17 @@ function _renderBubble(m, cfg) {
     </div>`;
   }
 
-  const bodyHtml = `<div class="ai-bubble__text">${_fmtAIText(m.content)}</div>
-    <div class="ai-bubble__footer">
-      <span class="ai-bubble__time">${time}</span>
-      ${!isUser ? `<button class="ai-copy-btn" onclick="_copyAIMsg(this)" title="Copy response">
-        <i class="fa-regular fa-copy"></i>
-      </button>` : ''}
-    </div>`;
+  const hasCopyBtn = !isUser && _aiMessages.length > 1;
+  const footerHtml = (time || hasCopyBtn)
+    ? `<div class="ai-bubble__footer">
+         <span class="ai-bubble__time">${time}</span>
+         ${hasCopyBtn ? `<button class="ai-copy-btn" onclick="_copyAIMsg(this)" title="Copy response">
+           <i class="fa-solid fa-copy"></i>
+         </button>` : ''}
+       </div>`
+    : '';
+
+  const bodyHtml = `<div class="ai-bubble__text">${_fmtAIText(m.content)}</div>${footerHtml}`;
 
   if (isUser) return `
     <div class="ai-bubble-row ai-bubble-row--user">
@@ -283,7 +287,7 @@ function _renderBubble(m, cfg) {
 
   return `
     <div class="ai-bubble-row ai-bubble-row--ai">
-      <div class="ai-avatar ai-avatar--ai" style="background:${cfg.colorHex}18;color:${cfg.colorHex}">
+      <div class="ai-avatar ai-avatar--ai">
         <i class="fa-solid fa-robot"></i>
       </div>
       <div class="ai-bubble ai-bubble--ai">${bodyHtml}</div>
@@ -296,7 +300,7 @@ function _copyAIMsg(btn) {
   const text   = bubble?.querySelector('.ai-bubble__text')?.innerText || '';
   navigator.clipboard?.writeText(text).then(() => {
     btn.innerHTML = '<i class="fa-solid fa-check"></i>';
-    setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 1800);
+    setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy"></i>'; }, 1800);
   });
 }
 
