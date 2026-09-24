@@ -690,13 +690,18 @@ async function api(path, opts = {}) {
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${t}`, ...(opts.headers || {}) },
   });
 
-  let res = await doFetch(token);
+  let res;
+  try {
+    res = await doFetch(token);
+  } catch {
+    return null; // network error / backend unreachable
+  }
 
   // Try a silent refresh on 401 before giving up
   if (res.status === 401 && refreshToken) {
     await _silentRefresh();
     if (!token) return null;
-    res = await doFetch(token);
+    try { res = await doFetch(token); } catch { return null; }
     if (res.status === 401) { logout(); return null; }
   } else if (res.status === 401) {
     logout(); return null;
@@ -891,7 +896,30 @@ document.addEventListener('click', function(e) {
 /* ── dashboard router ── */
 async function renderDashboard() {
   const d = await api('/api/dashboard');
-  if (!d) return;
+  if (!d) {
+    const pc = document.getElementById('page-content');
+    if (pc) pc.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                  min-height:60vh;gap:16px;text-align:center;padding:24px">
+        <div style="width:56px;height:56px;border-radius:14px;background:var(--primary-ghost);
+                    display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--primary)">
+          <i class="fa-solid fa-plug-circle-exclamation"></i>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px">
+            Could not load dashboard
+          </div>
+          <div style="font-size:13px;color:var(--text3);max-width:340px;line-height:1.6">
+            The server didn't respond. If you're on the free plan, it may be waking up — 
+            wait a few seconds and try again.
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="navigate('dashboard')">
+          <i class="fa-solid fa-rotate-right"></i> Retry
+        </button>
+      </div>`;
+    return;
+  }
   if (d.role === 'doctor') return renderDoctorDashboard(d);
   if (d.role === 'nurse')  return renderNurseDashboard(d);
   return renderAdminDashboard(d);
