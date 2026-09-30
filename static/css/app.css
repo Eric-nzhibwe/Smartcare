@@ -1231,3 +1231,19 @@ textarea { resize: vertical; min-height: 70px; }
   .ai-send-btn { width: 42px; height: 42px; border-radius: 10px; font-size: 15px; }
   .ai-tabs { max-width: 100%; }
 }
+
+/* ── Login screen — overrides app-shell body flex layout ── */
+#login-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(150deg, #0f4c81 0%, #1a69b3 45%, #00a878 100%);
+  padding: 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  z-index: 9999;
+}

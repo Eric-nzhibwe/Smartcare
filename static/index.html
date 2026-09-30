@@ -93,11 +93,13 @@ html.wf-active code,html.wf-active pre,html.wf-active tt,html.wf-active .mono{fo
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  min-height: 100dvh; /* dynamic viewport on mobile — avoids browser chrome overlap */
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   background: linear-gradient(150deg, #0f4c81 0%, #1a69b3 45%, #00a878 100%);
   padding: 16px;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 .login-card {
   background: white;
@@ -106,6 +108,7 @@ html.wf-active code,html.wf-active pre,html.wf-active tt,html.wf-active .mono{fo
   width: 100%;
   max-width: 420px;
   box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  box-sizing: border-box;
 }
 .login-logo { text-align: center; margin-bottom: 22px }
 .login-logo .cross { font-size: 38px; margin-bottom: 8px; display: block }
@@ -118,16 +121,12 @@ html.wf-active code,html.wf-active pre,html.wf-active tt,html.wf-active .mono{fo
 /* Responsive login */
 @media (max-width: 480px) {
   #login-screen {
-    padding: 16px 12px;
+    padding: max(16px, env(safe-area-inset-top, 16px)) 12px max(16px, env(safe-area-inset-bottom, 16px));
     align-items: center;
-    padding-top: max(16px, env(safe-area-inset-top, 16px));
-    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
   }
   .login-card {
     padding: 24px 20px;
     border-radius: 14px;
-    max-height: none;
-    margin: auto;
   }
   .login-logo { margin-bottom: 18px }
   .login-logo .cross { font-size: 32px }
