@@ -1247,3 +1247,12 @@ textarea { resize: vertical; min-height: 70px; }
   box-sizing: border-box;
   z-index: 9999;
 }
+
+/* ── App shell — ensure it fills the full viewport ── */
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: none; /* JS toggles this to flex on login */
+  flex-direction: row;
+  overflow: hidden;
+}
