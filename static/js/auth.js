@@ -119,19 +119,40 @@ const Auth = (() => {
         },
       });
 
-      let res = await doFetch(_token);
+      let res;
+      try {
+        res = await doFetch(_token);
+      } catch (networkErr) {
+        console.error('apiFetch network error:', networkErr);
+        return null;
+      }
 
       if (res.status === 401 && _refreshToken) {
         await _silentRefresh();
         if (!_token) return null;
-        res = await doFetch(_token);
+        try {
+          res = await doFetch(_token);
+        } catch (networkErr) {
+          console.error('apiFetch retry network error:', networkErr);
+          return null;
+        }
         if (res.status === 401) { logout(); return null; }
       } else if (res.status === 401) {
         logout();
         return null;
       }
 
-      return res.json();
+      if (!res.ok) {
+        console.error(`apiFetch error: ${res.status} ${res.statusText} — ${path}`);
+        return null;
+      }
+
+      try {
+        return await res.json();
+      } catch (parseErr) {
+        console.error('apiFetch JSON parse error:', parseErr);
+        return null;
+      }
     },
 
     logout,

@@ -12,7 +12,7 @@ let _reportData = null;
    ════════════════════════════════════════════════════════ */
 async function renderReports() {
   const d = await api('/api/dashboard');
-  if (!d) return;
+  if (!d) { _showPageError('reports'); return; }
   _reportData = d;
 
   const role = d.role || currentUser?.role || 'admin';

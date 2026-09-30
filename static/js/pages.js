@@ -6,7 +6,7 @@
 // ── PATIENTS LIST ─────────────────────────────────────────
 async function renderPatients(q='') {
   const patients = await api(`/api/patients?q=${encodeURIComponent(q)}`);
-  if (!patients) return;
+  if (!patients) { _showPageError('patients'); return; }
   const pageContent = document.getElementById('page-content');
   if (!pageContent) return;
   pageContent.innerHTML = `
@@ -278,7 +278,7 @@ async function renderEncounters(page = 1) {
   if (dateTo)     url += `&to=${dateTo}`;
 
   const data = await api(url);
-  if (!data) return;
+  if (!data) { _showPageError('encounters'); return; }
 
   const { results, total, num_pages } = data;
 
@@ -471,7 +471,7 @@ async function submitEncounter(patientId) {
 // ── USERS PAGE ────────────────────────────────────────────
 async function renderUsers() {
   const users = await api('/api/users');
-  if (!users) return;
+  if (!users) { _showPageError('users'); return; }
   const isAdmin = currentUser.role === 'admin';
   const pageContent = document.getElementById('page-content');
   if (!pageContent) return;

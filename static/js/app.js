@@ -347,10 +347,24 @@ document.addEventListener('click', (e) => {
   }
 });
 
+/* ── Shared error state for failed API loads ── */
+function _showPageError(page) {
+  const el = document.getElementById('page-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="empty-state" style="padding:60px">
+      <i class="fa-solid fa-circle-exclamation" style="font-size:32px;color:var(--danger);display:block;margin-bottom:12px"></i>
+      <p style="font-size:14px;font-weight:500;color:var(--text)">Failed to load content</p>
+      <p style="margin-top:6px">Could not reach the server. Check your connection or try again.</p>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="navigate('${page}')">
+        <i class="fa-solid fa-rotate-right"></i> Retry
+      </button>
+    </div>`;
+}
 /* ── Dashboard router ── */
 async function renderDashboard() {
   const d = await api('/api/dashboard');
-  if (!d) return;
+  if (!d) { _showPageError('dashboard'); return; }
   if (d.role === 'doctor') return renderDoctorDashboard(d);
   if (d.role === 'nurse')  return renderNurseDashboard(d);
   return renderAdminDashboard(d);
