@@ -16,7 +16,7 @@ if (!Auth.requireAuth()) {
 
 /* ── Shared state (read by dashboard/page scripts) ── */
 const currentUser = Auth.getUser();
-let currentPage   = 'dashboard';
+let currentPage = 'dashboard';
 
 /* ── Role navigation definitions ── */
 const ROLE_NAV = {
@@ -74,11 +74,11 @@ const ROLE_NAV = {
 
 /* ── Page title map ── */
 const PAGE_TITLES = {
-  dashboard:  'Dashboard',
-  patients:   'Patients',
+  dashboard: 'Dashboard',
+  patients: 'Patients',
   encounters: 'Clinical Encounters',
-  reports:    'Reports & Analytics',
-  users:      'User Management',
+  reports: 'Reports & Analytics',
+  users: 'User Management',
 };
 
 /* ── Shared API wrapper (delegates to Auth.apiFetch) ── */
@@ -89,7 +89,7 @@ function api(path, opts = {}) {
 /* ── Bootstrap shell ── */
 function _initShell() {
   const role = currentUser.role;
-  const nav  = ROLE_NAV[role];
+  const nav = ROLE_NAV[role];
   if (!nav) {
     Auth.logout();
     return;
@@ -160,7 +160,7 @@ function _skeletonFor(page, role) {
 
     // 4 stat cards
     const stats = `<div class="stats-grid">
-      ${[0,1,2,3].map(()=>`<div class="stat-card skel-card">${pulse}<div class="skel-line skel-line--lg"></div><div class="skel-line skel-line--sm"></div></div>`).join('')}
+      ${[0, 1, 2, 3].map(() => `<div class="stat-card skel-card">${pulse}<div class="skel-line skel-line--lg"></div><div class="skel-line skel-line--sm"></div></div>`).join('')}
     </div>`;
 
     // 2-col content rows
@@ -174,8 +174,8 @@ function _skeletonFor(page, role) {
 
   if (page === 'patients' || page === 'encounters') {
     const toolbar = `<div class="page-toolbar"><div class="skel-search">${pulse}</div><div class="skel-btn">${pulse}</div></div>`;
-    const table   = `<div class="card skel-card">
-      ${[0,1,2,3,4,5].map(()=>`<div class="skel-row">${pulse}</div>`).join('')}
+    const table = `<div class="card skel-card">
+      ${[0, 1, 2, 3, 4, 5].map(() => `<div class="skel-row">${pulse}</div>`).join('')}
     </div>`;
     return toolbar + table;
   }
@@ -198,11 +198,11 @@ function _skeletonFor(page, role) {
 
 /* Page handler map — populated by each page script */
 const PAGES = {
-  dashboard:  () => renderDashboard(),
-  patients:   () => renderPatients(),
+  dashboard: () => renderDashboard(),
+  patients: () => renderPatients(),
   encounters: () => renderEncounters(),
-  reports:    () => renderReports(),
-  users:      () => renderUsers(),
+  reports: () => renderReports(),
+  users: () => renderUsers(),
 };
 
 /* ── Sidebar (mobile) ── */
@@ -219,8 +219,8 @@ function closeSidebar() {
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
   if (!el) return;
-  el.textContent  = msg;
-  el.className    = `toast show${type ? ' ' + type : ''}`;
+  el.textContent = msg;
+  el.className = `toast show${type ? ' ' + type : ''}`;
   clearTimeout(el._timer);
   el._timer = setTimeout(() => el.classList.remove('show'), 3500);
 }
@@ -266,12 +266,12 @@ function genderBadge(g) {
 }
 function encTypeBadge(t) {
   const map = {
-    OPD:         'badge-blue',
-    'ART Clinic':'badge-green',
-    Inpatient:   'badge-warn',
-    MCH:         'badge-green',
+    OPD: 'badge-blue',
+    'ART Clinic': 'badge-green',
+    Inpatient: 'badge-warn',
+    MCH: 'badge-green',
     'TB Clinic': 'badge-warn',
-    Emergency:   'badge-red',
+    Emergency: 'badge-red',
   };
   return `<span class="badge ${map[t] || 'badge-gray'}">${t}</span>`;
 }
@@ -280,7 +280,7 @@ function roleBadge(r) {
   return `<span class="badge ${map[r] || 'badge-gray'}">${r}</span>`;
 }
 function toggleEnc(header) {
-  const body    = header.nextElementSibling;
+  const body = header.nextElementSibling;
   const chevron = header.querySelector('.chevron');
   body.classList.toggle('open');
   if (chevron) {
@@ -317,14 +317,14 @@ function handleQuickSearch(val) {
           <div class="qsr-name">${p.first_name} ${p.last_name}</div>
           <div class="qsr-meta">${p.smart_id} · ${age(p.date_of_birth)} yrs · ${p.gender}
             ${p.allergies && p.allergies !== 'None'
-              ? `<span class="badge badge-warn" style="margin-left:4px;font-size:10px">
+        ? `<span class="badge badge-warn" style="margin-left:4px;font-size:10px">
                    <i class="fa-solid fa-triangle-exclamation"></i> ${p.allergies}
                  </span>` : ''}
           </div>
         </div>
         <button class="btn btn-primary btn-sm"
           onclick="event.stopPropagation();
-                   showEncounterModal(${p.id},'${(p.first_name+' '+p.last_name).replace(/'/g,"\\'")}');
+                   showEncounterModal(${p.id},'${(p.first_name + ' ' + p.last_name).replace(/'/g, "\\'")}');
                    document.getElementById('qs-results').style.display='none'">
           <i class="fa-solid fa-stethoscope"></i>
         </button>
@@ -341,7 +341,7 @@ function openQS() {
 /* Close quick-search on outside click */
 document.addEventListener('click', (e) => {
   const wrap = document.getElementById('qs-wrap');
-  const box  = document.getElementById('qs-results');
+  const box = document.getElementById('qs-results');
   if (wrap && box && !wrap.contains(e.target)) {
     box.style.display = 'none';
   }
@@ -366,7 +366,7 @@ async function renderDashboard() {
   const d = await api('/api/dashboard');
   if (!d) { _showPageError('dashboard'); return; }
   if (d.role === 'doctor') return renderDoctorDashboard(d);
-  if (d.role === 'nurse')  return renderNurseDashboard(d);
+  if (d.role === 'nurse') return renderNurseDashboard(d);
   return renderAdminDashboard(d);
 }
 

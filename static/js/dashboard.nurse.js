@@ -133,7 +133,7 @@ function renderNurseDashboard(d) {
           </tr>`).join('')}
       </tbody>
     </table></div>
-  </div>`;}
+  </div>`;
 
   const followups = `
   <div class="grid-2 mb-4">
@@ -273,6 +273,7 @@ function renderNurseDashboard(d) {
 
   document.getElementById('page-content').innerHTML =
     header + stats + triageQueue + followups + bottom + recent;
+}
 
 /* ── Quick Vitals Modal ──────────────────────────────────────────────────── */
 function showQuickVitalsModal(encounterId, patientName) {
