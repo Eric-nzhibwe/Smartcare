@@ -228,10 +228,10 @@ textarea { resize: vertical; min-height: 70px; }
 .bar-fill  { height: 100%; border-radius: 4px; background: var(--primary); transition: width .5s ease; }
 .bar-fill.accent { background: var(--accent); }
 .bar-val   { font-size: 11px; color: var(--text3); width: 28px; text-align: right; flex-shrink: 0; }
-.trend-chart { display: flex; align-items: flex-end; gap: 6px; height: 60px; padding: 0 4px; }
+.trend-chart { display: flex; align-items: flex-end; gap: 6px; height: 70px; padding: 0 4px; overflow: visible; }
 .trend-bar   { flex: 1; background: var(--primary); border-radius: 3px 3px 0 0; opacity: .7; transition: opacity .15s; min-width: 0; position: relative; }
 .trend-bar:hover { opacity: 1; }
-.trend-bar .tip { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.trend-bar .tip { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 10; }
 .trend-bar:hover .tip { opacity: 1; }
 
 /* ── Patient detail ── */
@@ -262,6 +262,16 @@ textarea { resize: vertical; min-height: 70px; }
 .enc-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .enc-detail .key { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .3px; margin-bottom: 2px; }
 .enc-detail .val { font-size: 13px; color: var(--text2); }
+
+/* ── Critical patient rows (nurse dashboard) ── */
+.critical-row { background: #fff5f5 !important; }
+.critical-row td { border-bottom: 1px solid #fecaca; }
+.critical-row:hover td { background: #fef2f2 !important; }
+.critical-label { display: inline-flex; align-items: center; gap: 4px; background: var(--danger); color: #fff; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; animation: critical-pulse 2s infinite; }
+@keyframes critical-pulse { 0%,100% { opacity: 1; } 50% { opacity: .7; } }
+
+/* ── Vitals modal note ── */
+.vitals-modal-note { display: flex; align-items: center; gap: 8px; background: var(--primary-ghost); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: var(--primary); }
 
 /* ── Data quality (admin) ── */
 .dq-issue { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }

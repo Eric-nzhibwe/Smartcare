@@ -109,7 +109,7 @@ function renderAdminDashboard(d) {
       <div class="card-body">
         ${(d.monthly_trend||[]).length===0
           ? `<div class="empty-state"><p>No trend data yet</p></div>`
-          : `<div class="trend-chart" style="height:70px">
+          : `<div class="trend-chart">
               ${(d.monthly_trend||[]).map(m=>`
                 <div class="trend-bar" style="height:${Math.max(6,Math.round((m.cnt/maxTrend)*64))}px">
                   <div class="tip">${m.month}: ${m.cnt} encounter${m.cnt!==1?'s':''}</div>

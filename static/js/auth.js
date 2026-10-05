@@ -110,20 +110,26 @@ const Auth = (() => {
 
     /** Authenticated fetch — retries once after a silent refresh on 401. */
     async apiFetch(path, opts = {}) {
-      const doFetch = (t) => fetch(path, {
-        ...opts,
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${t}`,
-          ...(opts.headers || {}),
-        },
-      });
+      const doFetch = (t) => {
+        const controller = new AbortController();
+        const timeoutId  = setTimeout(() => controller.abort(), 20_000); // 20s timeout
+        return fetch(path, {
+          ...opts,
+          signal: controller.signal,
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${t}`,
+            ...(opts.headers || {}),
+          },
+        }).finally(() => clearTimeout(timeoutId));
+      };
 
       let res;
       try {
         res = await doFetch(_token);
       } catch (networkErr) {
-        console.error('apiFetch network error:', networkErr);
+        const isTimeout = networkErr.name === 'AbortError';
+        console.error(isTimeout ? `apiFetch timeout: ${path}` : 'apiFetch network error:', networkErr);
         return null;
       }
 
@@ -133,7 +139,8 @@ const Auth = (() => {
         try {
           res = await doFetch(_token);
         } catch (networkErr) {
-          console.error('apiFetch retry network error:', networkErr);
+          const isTimeout = networkErr.name === 'AbortError';
+          console.error(isTimeout ? `apiFetch retry timeout: ${path}` : 'apiFetch retry network error:', networkErr);
           return null;
         }
         if (res.status === 401) { logout(); return null; }
@@ -232,18 +239,69 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = '/app';
 
     } catch {
-      showErr(
-        'Cannot reach the server. ' +
-        'If on the free Render plan, wait 30 s for it to wake up, then try again.'
-      );
+      /* Server is cold (Render free tier spin-down) — auto-retry with countdown */
+      setLoading(false);
+      await _wakeAndRetry(username, password);
     } finally {
       setLoading(false);
     }
   });
 
+  /* ── Wake-up poller: retries login every 5 s for up to 75 s ── */
+  async function _wakeAndRetry(username, password) {
+    const maxAttempts = 15;   // 15 × 5 s = 75 s max wait
+    const interval    = 5000;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const remaining = (maxAttempts - attempt + 1) * (interval / 1000);
+      showErr(
+        `<i class="fa-solid fa-spinner fa-spin"></i> ` +
+        `Server is waking up… retrying in a moment ` +
+        `<span style="opacity:.7">(${remaining}s)</span>`,
+        true /* isHtml */
+      );
+
+      await new Promise(r => setTimeout(r, interval));
+
+      try {
+        const res  = await fetch('/api/login', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          const allowedRoles = ['doctor', 'nurse', 'admin'];
+          if (!allowedRoles.includes(data.user.role)) {
+            showErr('Your account has an unrecognised role. Contact your administrator.');
+            return;
+          }
+          showErr('');
+          Auth._storeSession(data.token, data.refresh, data.user);
+          window.location.href = '/app';
+          return;
+        }
+
+        /* Server is up but credentials wrong — stop retrying */
+        showErr(data.error || 'Invalid username or password.');
+        return;
+
+      } catch {
+        /* Still not up — loop continues */
+      }
+    }
+
+    showErr('Server did not respond after 75 seconds. Please try again later.');
+  }
+
   /* ── Helpers ── */
-  function showErr(msg) {
-    errBox.textContent   = msg;
+  function showErr(msg, isHtml = false) {
+    if (isHtml) {
+      errBox.innerHTML     = msg;
+    } else {
+      errBox.textContent   = msg;
+    }
     errBox.style.display = msg ? 'block' : 'none';
   }
 

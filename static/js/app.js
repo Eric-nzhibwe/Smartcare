@@ -138,10 +138,9 @@ function navigate(page) {
   const pageTitle = document.getElementById('page-title');
   if (pageTitle) pageTitle.textContent = PAGE_TITLES[page] || page;
 
-  /* Skeleton while loading — role-aware */
-  const role = currentUser?.role || 'doctor';
+  /* Skeleton while loading */
   const pageContent = document.getElementById('page-content');
-  if (pageContent) pageContent.innerHTML = _skeletonFor(page, role);
+  if (pageContent) pageContent.innerHTML = _skeletonFor(page);
 
   closeSidebar();
 
@@ -151,7 +150,7 @@ function navigate(page) {
 }
 
 /* ── Skeleton screens ── */
-function _skeletonFor(page, role) {
+function _skeletonFor(page) {
   const pulse = `<div class="skel-pulse"></div>`;
 
   if (page === 'dashboard') {
@@ -334,7 +333,9 @@ function handleQuickSearch(val) {
 }
 
 function openQS() {
-  const val = document.getElementById('qs-input').value;
+  const input = document.getElementById('qs-input');
+  if (!input) return;
+  const val = input.value;
   if (val && val.trim().length >= 2) handleQuickSearch(val);
 }
 
@@ -365,9 +366,26 @@ function _showPageError(page) {
 async function renderDashboard() {
   const d = await api('/api/dashboard');
   if (!d) { _showPageError('dashboard'); return; }
-  if (d.role === 'doctor') return renderDoctorDashboard(d);
-  if (d.role === 'nurse') return renderNurseDashboard(d);
-  return renderAdminDashboard(d);
+
+  // Each render function lives in its own dashboard.*.js file loaded before app.js
+  if (d.role === 'doctor' && typeof renderDoctorDashboard === 'function') {
+    return renderDoctorDashboard(d);
+  }
+  if (d.role === 'nurse' && typeof renderNurseDashboard === 'function') {
+    return renderNurseDashboard(d);
+  }
+  if (typeof renderAdminDashboard === 'function') {
+    return renderAdminDashboard(d);
+  }
+
+  // Fallback: render function not found — show diagnostic error
+  const el = document.getElementById('page-content');
+  if (el) el.innerHTML = `
+    <div class="empty-state" style="padding:60px">
+      <i class="fa-solid fa-triangle-exclamation" style="font-size:32px;color:var(--warn);display:block;margin-bottom:12px"></i>
+      <p style="font-size:14px;font-weight:500;color:var(--text)">Dashboard renderer not found</p>
+      <p style="margin-top:6px;color:var(--text3)">Could not find render function for role: <code>${d.role}</code></p>
+    </div>`;
 }
 
 /* ── Logout (exposed for the sidebar button) ── */

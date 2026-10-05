@@ -396,7 +396,11 @@ let _batchQueue = [];
 let _batchIdx   = 0;
 
 function startBatchTriage() {
-  _batchQueue = (window._lastNurseData && window._lastNurseData.todays_queue || [])
+  if (!window._lastNurseData) {
+    toast('Dashboard still loading — please wait', 'error');
+    return;
+  }
+  _batchQueue = (window._lastNurseData.todays_queue || [])
     .filter(e => !e.has_vitals);
   _batchIdx = 0;
   if (!_batchQueue.length) { toast('No patients with pending vitals', 'success'); return; }
