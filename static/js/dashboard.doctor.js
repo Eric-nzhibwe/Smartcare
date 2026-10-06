@@ -5,9 +5,10 @@
 
 function renderDoctorDashboard(d) {
   const s        = d.stats;
-  const maxTrend = Math.max(...(d.monthly_trend.length ? d.monthly_trend.map(t=>t.cnt) : [1]), 1);
-  const maxDiag  = Math.max(...(d.top_diagnoses.length ? d.top_diagnoses.map(x=>x.cnt) : [1]), 1);
-  const maxType  = Math.max(...(d.enc_types.length     ? d.enc_types.map(x=>x.cnt)     : [1]), 1);
+  const _max     = (arr, fn) => arr.length ? arr.reduce((m, x) => Math.max(m, fn(x)), 0) || 1 : 1;
+  const maxTrend = _max(d.monthly_trend, t => t.cnt);
+  const maxDiag  = _max(d.top_diagnoses, x => x.cnt);
+  const maxType  = _max(d.enc_types,     x => x.cnt);
 
   /* ── header banner ─────────────────────────────────────── */
   const header = `

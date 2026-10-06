@@ -5,12 +5,13 @@
 
 function renderAdminDashboard(d) {
   const s        = d.stats;
-  const maxTrend = Math.max(...(d.monthly_trend||[]).map(t=>t.cnt), 1);
-  const maxProv  = Math.max(...(d.province_dist||[]).map(p=>p.cnt), 1);
-  const maxDiag  = Math.max(...(d.top_diagnoses||[]).map(x=>x.cnt), 1);
-  const maxFacP  = Math.max(...(d.facility_patients||[]).map(x=>x.cnt), 1);
-  const maxFacE  = Math.max(...(d.facility_encounters||[]).map(x=>x.cnt), 1);
-  const maxEnc   = Math.max(...(d.enc_types||[]).map(x=>x.cnt), 1);
+  const _max     = (arr, fn) => arr.length ? arr.reduce((m, x) => Math.max(m, fn(x)), 0) || 1 : 1;
+  const maxTrend = _max(d.monthly_trend||[],        t => t.cnt);
+  const maxProv  = _max(d.province_dist||[],         p => p.cnt);
+  const maxDiag  = _max(d.top_diagnoses||[],         x => x.cnt);
+  const maxFacP  = _max(d.facility_patients||[],     x => x.cnt);
+  const maxFacE  = _max(d.facility_encounters||[],   x => x.cnt);
+  const maxEnc   = _max(d.enc_types||[],             x => x.cnt);
 
   const header = `
   <div class="dash-banner dash-banner--admin">

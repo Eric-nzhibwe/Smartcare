@@ -364,28 +364,42 @@ function _showPageError(page) {
 }
 /* ── Dashboard router ── */
 async function renderDashboard() {
-  const d = await api('/api/dashboard');
+  let d;
+  try {
+    d = await api('/api/dashboard');
+  } catch (e) {
+    console.error('[renderDashboard] api() threw:', e);
+    _showPageError('dashboard');
+    return;
+  }
+
   if (!d) { _showPageError('dashboard'); return; }
 
-  // Each render function lives in its own dashboard.*.js file loaded before app.js
-  if (d.role === 'doctor' && typeof renderDoctorDashboard === 'function') {
-    return renderDoctorDashboard(d);
+  try {
+    if (d.role === 'doctor' && typeof renderDoctorDashboard === 'function') {
+      return renderDoctorDashboard(d);
+    }
+    if (d.role === 'nurse' && typeof renderNurseDashboard === 'function') {
+      return renderNurseDashboard(d);
+    }
+    if (typeof renderAdminDashboard === 'function') {
+      return renderAdminDashboard(d);
+    }
+    // Renderer not found
+    throw new Error(`No renderer for role: ${d.role}`);
+  } catch (renderErr) {
+    console.error('[renderDashboard] render threw:', renderErr);
+    const el = document.getElementById('page-content');
+    if (el) el.innerHTML = `
+      <div class="empty-state" style="padding:60px">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:32px;color:var(--danger);display:block;margin-bottom:12px"></i>
+        <p style="font-size:14px;font-weight:500;color:var(--text)">Dashboard failed to render</p>
+        <p style="margin-top:6px;color:var(--text3);font-family:'DM Mono',monospace;font-size:12px">${renderErr.message}</p>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="navigate('dashboard')">
+          <i class="fa-solid fa-rotate-right"></i> Retry
+        </button>
+      </div>`;
   }
-  if (d.role === 'nurse' && typeof renderNurseDashboard === 'function') {
-    return renderNurseDashboard(d);
-  }
-  if (typeof renderAdminDashboard === 'function') {
-    return renderAdminDashboard(d);
-  }
-
-  // Fallback: render function not found — show diagnostic error
-  const el = document.getElementById('page-content');
-  if (el) el.innerHTML = `
-    <div class="empty-state" style="padding:60px">
-      <i class="fa-solid fa-triangle-exclamation" style="font-size:32px;color:var(--warn);display:block;margin-bottom:12px"></i>
-      <p style="font-size:14px;font-weight:500;color:var(--text)">Dashboard renderer not found</p>
-      <p style="margin-top:6px;color:var(--text3)">Could not find render function for role: <code>${d.role}</code></p>
-    </div>`;
 }
 
 /* ── Logout (exposed for the sidebar button) ── */
@@ -394,4 +408,9 @@ function logout() {
 }
 
 /* ── Init on load ── */
-document.addEventListener('DOMContentLoaded', _initShell);
+// Guard against DOMContentLoaded having already fired before this defer script runs
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initShell);
+} else {
+  _initShell();
+}

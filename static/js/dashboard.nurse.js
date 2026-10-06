@@ -5,7 +5,8 @@
 
 function renderNurseDashboard(d) {
   const s       = d.stats;
-  const maxType = Math.max(...(d.enc_types.length ? d.enc_types.map(x => x.cnt) : [1]), 1);
+  const _max    = (arr, fn) => arr.length ? arr.reduce((m, x) => Math.max(m, fn(x)), 0) || 1 : 1;
+  const maxType = _max(d.enc_types, x => x.cnt);
   const vitPct  = s.encounters_today > 0
     ? Math.round(((s.encounters_today - s.vitals_pending) / s.encounters_today) * 100) : 100;
 
