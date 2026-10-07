@@ -147,7 +147,23 @@ function navigate(page) {
 
   /* Route to the correct render function */
   const handler = PAGES[page];
-  if (handler) handler();
+  if (handler) {
+    handler();
+  } else {
+    const el = document.getElementById('page-content');
+    if (el) el.innerHTML = `
+      <div class="empty-state" style="padding:60px">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:32px;color:var(--danger);display:block;margin-bottom:12px"></i>
+        <p style="font-size:14px;font-weight:500;color:var(--text)">Page failed to load</p>
+        <p style="margin-top:6px;color:var(--text3);font-size:13px">
+          The script for <strong>${page}</strong> did not load correctly.
+          Try refreshing the page.
+        </p>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="location.reload()">
+          <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+      </div>`;
+  }
 }
 
 /* ── Skeleton screens ── */
