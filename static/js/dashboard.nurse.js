@@ -375,18 +375,9 @@ async function startVitalsForPatient(patientId, patientName) {
     })
   });
   if (res && res.success) {
-    // Fetch fresh dashboard to get the new encounter ID
-    const d = await api('/api/dashboard');
-    if (!d) return;
-    const entry = d.todays_queue && d.todays_queue.find(e => e.patient_id === patientId && !e.has_vitals);
-    if (entry) {
-      closeModal();
-      showQuickVitalsModal(entry.encounter_id, patientName);
-    } else {
-      closeModal();
-      toast('Encounter created — find patient in queue', 'success');
-      navigate('dashboard');
-    }
+    // Use the encounter ID returned directly — no need to re-fetch the dashboard
+    closeModal();
+    showQuickVitalsModal(res.id, patientName);
   } else {
     toast('Could not create triage encounter', 'error');
   }
