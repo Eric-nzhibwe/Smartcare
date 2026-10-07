@@ -122,7 +122,8 @@ function _initShell() {
   if (qsWrap) qsWrap.style.display = role === 'doctor' ? 'flex' : 'none';
   if (triageBtnWrap) triageBtnWrap.style.display = role === 'nurse' ? 'inline-flex' : 'none';
 
-  /* Land on the dashboard */
+  /* Pre-fetch dashboard data while the shell renders, then navigate */
+  _prefetchDashboard();
   navigate('dashboard');
 }
 
@@ -362,12 +363,56 @@ function _showPageError(page) {
       </button>
     </div>`;
 }
+/* ── Dashboard loading config ── */
+const SKELETON_TIMEOUT_MS = 8000; // max ms the skeleton shows before giving up
+
+/**
+ * Pre-fetches dashboard data as soon as the shell boots so the data is
+ * already in-flight (or resolved) by the time navigate('dashboard') runs.
+ * Cleared after first use so subsequent refreshes hit the API fresh.
+ */
+let _dashboardPrefetch = null;
+
+function _prefetchDashboard() {
+  _dashboardPrefetch = api('/api/dashboard').catch(() => null);
+}
+
+/**
+ * Races the dashboard API call against a timeout.
+ * Shows content as soon as data arrives; shows a timeout UI if it takes
+ * longer than SKELETON_TIMEOUT_MS so the skeleton never hangs indefinitely.
+ */
+async function _fetchDashboardWithTimeout() {
+  // Use the prefetched promise if available, then clear it
+  const fetchPromise = _dashboardPrefetch || api('/api/dashboard');
+  _dashboardPrefetch = null;
+
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('timeout')), SKELETON_TIMEOUT_MS)
+  );
+
+  return Promise.race([fetchPromise, timeout]);
+}
+
 /* ── Dashboard router ── */
 async function renderDashboard() {
   let d;
   try {
-    d = await api('/api/dashboard');
+    d = await _fetchDashboardWithTimeout();
   } catch (e) {
+    if (e.message === 'timeout') {
+      const el = document.getElementById('page-content');
+      if (el) el.innerHTML = `
+        <div class="empty-state" style="padding:60px">
+          <i class="fa-solid fa-hourglass-half" style="font-size:32px;color:var(--warn);display:block;margin-bottom:12px"></i>
+          <p style="font-size:14px;font-weight:500;color:var(--text)">Taking longer than expected</p>
+          <p style="margin-top:6px;color:var(--text3)">The server is slow to respond. Check your connection or try again.</p>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="navigate('dashboard')">
+            <i class="fa-solid fa-rotate-right"></i> Retry
+          </button>
+        </div>`;
+      return;
+    }
     console.error('[renderDashboard] api() threw:', e);
     _showPageError('dashboard');
     return;
