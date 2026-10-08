@@ -1,5 +1,5 @@
 /* ============================================================
-   NURSE DASHBOARD  — v4  (health-themed UI)
+   NURSE DASHBOARD  — v5  (refreshed UI)
    ============================================================ */
 
 function renderNurseDashboard(d) {
@@ -13,92 +13,98 @@ function renderNurseDashboard(d) {
     ? Math.round(((s.encounters_today - s.vitals_pending) / s.encounters_today) * 100) : 100;
 
   window._lastNurseData = d;
-
   const today = new Date().toLocaleDateString('en-ZM', { weekday: 'long', day: 'numeric', month: 'long' });
 
   el.innerHTML = `
 
 <!-- ═══ BANNER ═══ -->
-<div class="dash-banner dash-banner--nurse">
-  <div class="dash-banner__icon"><i class="fa-solid fa-user-nurse"></i></div>
-  <div class="dash-banner__body">
-    <div class="dash-banner__name">${d.nurse_name}</div>
-    <div class="dash-banner__meta">
+<div style="background:linear-gradient(135deg,var(--accent) 0%,#00956a 100%);
+            border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;
+            display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 4px 16px rgba(0,168,120,.25)">
+  <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.15);
+              display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;flex-shrink:0">
+    <i class="fa-solid fa-user-nurse"></i>
+  </div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px">${d.nurse_name}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px">
       <i class="fa-solid fa-hospital fa-fw" style="opacity:.7"></i>
       ${d.facility} &nbsp;·&nbsp; Nursing Station &nbsp;·&nbsp; ${today}
     </div>
   </div>
-  <div class="dash-banner__actions">
-    <button class="btn btn-primary btn-sm" onclick="showRegisterModal()">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25)"
+            onclick="showRegisterModal()">
       <i class="fa-solid fa-user-plus"></i> Register Patient
     </button>
-    <button class="btn btn-outline btn-sm" onclick="showVitalsSearchModal()">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25)"
+            onclick="showVitalsSearchModal()">
       <i class="fa-solid fa-heart-pulse"></i> Record Vitals
     </button>
-    <button class="ai-cta-btn" onclick="navigateAI()">
+    <button class="ai-cta-btn btn-sm" onclick="navigateAI()">
       <i class="fa-solid fa-robot"></i> AI Triage
       <span class="ai-badge">Groq</span>
     </button>
   </div>
 </div>
 
-<!-- ═══ KPI STATS ═══ -->
-<div class="stats-grid">
-  <div class="stat-card primary">
-    <div class="stat-top">
-      <div>
-        <div class="label">Facility Patients</div>
-        <div class="value">${s.total_patients.toLocaleString()}</div>
+<!-- ═══ KPI STRIP ═══ -->
+<div class="kpi-strip">
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--primary-ghost);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-users"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="ksi-val">${s.total_patients.toLocaleString()}</div>
     </div>
-    <div class="sub">
-      <i class="fa-solid fa-arrow-trend-up fa-fw" style="color:var(--accent)"></i>
-      +${s.registered_week} this week &nbsp;·&nbsp; ${s.registered_today} today
-    </div>
+    <div class="ksi-label">Facility Patients</div>
+    <div class="ksi-sub">+${s.registered_week} this week · ${s.registered_today} today</div>
   </div>
-  <div class="stat-card accent">
-    <div class="stat-top">
-      <div>
-        <div class="label">Encounters Today</div>
-        <div class="value">${s.encounters_today}</div>
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-stethoscope"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-stethoscope"></i></div>
+      <div class="ksi-val">${s.encounters_today}</div>
     </div>
-    <div class="sub">${s.encounters_month} this month</div>
+    <div class="ksi-label">Encounters Today</div>
+    <div class="ksi-sub">${s.encounters_month} this month</div>
   </div>
-  <div class="stat-card ${s.vitals_pending > 0 ? 'warn' : 'accent'}">
-    <div class="stat-top">
-      <div>
-        <div class="label">Vitals Pending</div>
-        <div class="value">${s.vitals_pending}</div>
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:${s.vitals_pending > 0 ? 'var(--warn-light)' : 'var(--accent-light)'};color:${s.vitals_pending > 0 ? 'var(--warn)' : 'var(--accent)'};display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-heart-pulse"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+      <div class="ksi-val" style="${s.vitals_pending > 0 ? 'color:var(--warn)' : ''}">${s.vitals_pending}</div>
     </div>
-    <div class="sub">
-      <div style="background:var(--border);border-radius:3px;height:5px;margin-bottom:4px;overflow:hidden">
-        <div style="background:var(--accent);height:100%;width:${vitPct}%;border-radius:3px;transition:width .8s ease"></div>
+    <div class="ksi-label">Vitals Pending</div>
+    <div class="ksi-sub">
+      <div class="mini-progress" style="max-width:90px;margin:4px auto 2px">
+        <div class="mini-progress-fill" style="width:${vitPct}%;background:var(--accent)"></div>
       </div>
       ${vitPct}% triaged today
     </div>
   </div>
-  <div class="stat-card ${s.allergy_count > 0 ? 'danger' : 'accent'}">
-    <div class="stat-top">
-      <div>
-        <div class="label">Allergy Alerts</div>
-        <div class="value">${s.allergy_count}</div>
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:${s.allergy_count > 0 ? 'var(--danger-light)' : 'var(--accent-light)'};color:${s.allergy_count > 0 ? 'var(--danger)' : 'var(--accent)'};display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="ksi-val" style="${s.allergy_count > 0 ? 'color:var(--danger)' : ''}">${s.allergy_count}</div>
     </div>
-    <div class="sub">Known allergies on file</div>
+    <div class="ksi-label">Allergy Alerts</div>
+    <div class="ksi-sub">Known allergies on file</div>
   </div>
 </div>
 
 <!-- ═══ TRIAGE QUEUE ═══ -->
 <div class="card mb-4">
-  <div class="card-header">
-    <h3><i class="fa-solid fa-clipboard-list" style="color:var(--primary)"></i> Today's Triage Queue</h3>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </div>
+    <h3>Today's Triage Queue</h3>
+    <div class="chi-right">
       <span class="badge badge-blue">${s.encounters_today} total</span>
       ${s.vitals_pending > 0
         ? `<span class="badge badge-warn"><i class="fa-solid fa-heart-pulse"></i> ${s.vitals_pending} pending</span>
@@ -117,7 +123,7 @@ function renderNurseDashboard(d) {
              <p>No encounters recorded today yet</p>
            </div></td></tr>`
         : (d.todays_queue || []).map(e => `
-        <tr class="${e.has_allergy && !e.has_vitals ? 'critical-row' : ''}" style="cursor:pointer" onclick="viewPatient(${e.patient_id})">
+        <tr style="cursor:pointer" onclick="viewPatient(${e.patient_id})">
           <td>
             <div style="display:flex;align-items:center;gap:10px">
               <div class="user-avatar" style="width:30px;height:30px;font-size:11px;
@@ -142,11 +148,13 @@ function renderNurseDashboard(d) {
             : `<span class="badge badge-warn"><i class="fa-solid fa-clock"></i> Pending</span>`}
           </td>
           <td>${e.has_allergy
-            ? `<span class="badge badge-red"><i class="fa-solid fa-triangle-exclamation"></i> ${e.allergies.length > 12 ? e.allergies.slice(0, 12) + '…' : e.allergies}</span>`
+            ? `<span class="badge badge-red"><i class="fa-solid fa-triangle-exclamation"></i> ${e.allergies.length > 12 ? e.allergies.slice(0,12)+'…' : e.allergies}</span>`
             : `<span class="badge badge-gray">None</span>`}
           </td>
           <td onclick="event.stopPropagation()">
-            <button class="btn btn-outline btn-sm" onclick="showQuickVitalsModal(${e.encounter_id}, '${e.patient_name.replace(/'/g, "\\'")}')" title="Record vitals">
+            <button class="btn btn-outline btn-sm"
+                    onclick="showQuickVitalsModal(${e.encounter_id}, '${e.patient_name.replace(/'/g,"\\'")}')"
+                    title="Record vitals">
               <i class="fa-solid fa-heart-pulse"></i>
             </button>
           </td>
@@ -158,9 +166,14 @@ function renderNurseDashboard(d) {
 <!-- ═══ FOLLOW-UPS ═══ -->
 <div class="grid-2 mb-4">
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-calendar-check" style="color:var(--accent)"></i> Follow-ups This Week</h3>
-      <span class="badge badge-blue">${s.upcoming_followups}</span>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--accent-light);color:var(--accent)">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <h3>Follow-ups This Week</h3>
+      <div class="chi-right">
+        <span class="badge badge-blue">${s.upcoming_followups}</span>
+      </div>
     </div>
     <div class="table-wrap"><table>
       <thead><tr><th>Patient</th><th>Type</th><th>Due</th><th>Clinician</th></tr></thead>
@@ -171,7 +184,7 @@ function renderNurseDashboard(d) {
           <tr style="cursor:pointer" onclick="viewPatient(${f.patient_id})">
             <td>
               <div class="patient-name">${f.patient_name}</div>
-              <div style="font-size:11px;color:var(--text3)">${f.last_diagnosis ? f.last_diagnosis.slice(0, 32) + (f.last_diagnosis.length > 32 ? '…' : '') : '—'}</div>
+              <div style="font-size:11px;color:var(--text3)">${f.last_diagnosis ? f.last_diagnosis.slice(0,32)+(f.last_diagnosis.length>32?'…':'') : '—'}</div>
             </td>
             <td>${encTypeBadge(f.encounter_type)}</td>
             <td>${f.days_away === 0
@@ -186,21 +199,24 @@ function renderNurseDashboard(d) {
   </div>
 
   <div class="card ${s.overdue_followups > 0 ? 'card--danger-border' : ''}">
-    <div class="card-header">
-      <h3 style="${s.overdue_followups > 0 ? 'color:var(--danger)' : ''}">
-        ${s.overdue_followups > 0 ? '<span class="alert-dot"></span>' : ''}
-        <i class="fa-solid fa-clock-rotate-left" style="color:${s.overdue_followups > 0 ? 'var(--danger)' : 'var(--text3)'}"></i>
-        Overdue Follow-ups
-      </h3>
-      ${s.overdue_followups > 0
-        ? `<span class="badge badge-red">${s.overdue_followups} overdue</span>`
-        : `<span class="badge badge-green"><i class="fa-solid fa-check"></i> All clear</span>`}
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:${s.overdue_followups > 0 ? 'var(--danger-light)' : 'var(--accent-light)'};color:${s.overdue_followups > 0 ? 'var(--danger)' : 'var(--accent)'}">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+      </div>
+      <h3 style="${s.overdue_followups > 0 ? 'color:var(--danger)' : ''}">Overdue Follow-ups</h3>
+      <div class="chi-right">
+        ${s.overdue_followups > 0
+          ? `<span class="badge badge-red">${s.overdue_followups} overdue</span>`
+          : `<span class="badge badge-green"><i class="fa-solid fa-check"></i> All clear</span>`}
+      </div>
     </div>
     <div class="table-wrap"><table>
       <thead><tr><th>Patient</th><th>Type</th><th>Was Due</th><th>Days Late</th></tr></thead>
       <tbody>
         ${(d.overdue_followups || []).length === 0
-          ? `<tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-circle-check" style="color:var(--accent);font-size:22px;display:block;margin-bottom:8px"></i><p>No overdue follow-ups</p></div></td></tr>`
+          ? `<tr><td colspan="4"><div class="empty-state">
+               <i class="fa-solid fa-circle-check" style="color:var(--accent);font-size:22px;display:block;margin-bottom:8px"></i>
+               <p>No overdue follow-ups</p></div></td></tr>`
           : d.overdue_followups.map(f => `
           <tr style="cursor:pointer" onclick="viewPatient(${f.patient_id})">
             <td>
@@ -219,9 +235,14 @@ function renderNurseDashboard(d) {
 <!-- ═══ ALLERGY REGISTER + ENC TYPES ═══ -->
 <div class="grid-2 mb-4">
   <div class="card ${s.allergy_count > 0 ? 'card--warn-border' : ''}">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-shield-virus" style="color:var(--warn)"></i> Allergy Alert Register</h3>
-      <span class="badge badge-warn">${s.allergy_count} patient${s.allergy_count !== 1 ? 's' : ''}</span>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--warn-light);color:var(--warn)">
+        <i class="fa-solid fa-shield-virus"></i>
+      </div>
+      <h3>Allergy Alert Register</h3>
+      <div class="chi-right">
+        <span class="badge badge-warn">${s.allergy_count} patient${s.allergy_count !== 1 ? 's' : ''}</span>
+      </div>
     </div>
     <div class="table-wrap"><table>
       <thead><tr><th>Patient</th><th>SmartID</th><th>Known Allergies</th><th>Blood Group</th></tr></thead>
@@ -240,9 +261,14 @@ function renderNurseDashboard(d) {
   </div>
 
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-chart-pie" style="color:var(--primary)"></i> Encounter Types</h3>
-      <span class="badge badge-gray">${d.facility}</span>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+        <i class="fa-solid fa-chart-pie"></i>
+      </div>
+      <h3>Encounter Types</h3>
+      <div class="chi-right">
+        <span class="badge badge-gray">${d.facility}</span>
+      </div>
     </div>
     <div class="card-body">
       ${(d.enc_types || []).length === 0
@@ -259,9 +285,14 @@ function renderNurseDashboard(d) {
 
 <!-- ═══ RECENT REGISTRATIONS ═══ -->
 <div class="card">
-  <div class="card-header">
-    <h3><i class="fa-solid fa-user-plus" style="color:var(--accent)"></i> Recently Registered Patients</h3>
-    <button class="btn btn-ghost btn-sm" onclick="navigate('patients')">View all →</button>
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--accent-light);color:var(--accent)">
+      <i class="fa-solid fa-user-plus"></i>
+    </div>
+    <h3>Recently Registered Patients</h3>
+    <div class="chi-right">
+      <button class="btn btn-ghost btn-sm" onclick="navigate('patients')">View all →</button>
+    </div>
   </div>
   <div class="table-wrap"><table>
     <thead><tr><th>Patient</th><th>SmartID</th><th>Age/Gender</th><th>Phone</th><th>Allergy</th><th>Registered</th></tr></thead>

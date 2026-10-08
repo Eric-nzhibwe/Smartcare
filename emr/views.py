@@ -379,116 +379,121 @@ def _admin_dashboard(request):
 
 
 def _doctor_dashboard(request):
-    user  = request.user
-    today = datetime.date.today()
-    six_months_ago = today - datetime.timedelta(days=180)
+    try:
+        user  = request.user
+        today = datetime.date.today()
+        six_months_ago = today - datetime.timedelta(days=180)
 
-    my_encounters  = Encounter.objects.filter(clinician=user)
-    my_patient_ids = my_encounters.values_list('patient_id', flat=True).distinct()
-    my_patients    = Patient.objects.filter(id__in=my_patient_ids)
+        my_encounters  = Encounter.objects.filter(clinician=user)
+        my_patient_ids = my_encounters.values_list('patient_id', flat=True).distinct()
+        my_patients    = Patient.objects.filter(id__in=my_patient_ids)
 
-    total_my_patients    = my_patients.count()
-    total_my_encounters  = my_encounters.count()
-    today_my_encounters  = my_encounters.filter(visit_date=today).count()
-    monthly_my_encounters = my_encounters.filter(
-        visit_date__year=today.year, visit_date__month=today.month
-    ).count()
+        total_my_patients     = my_patients.count()
+        total_my_encounters   = my_encounters.count()
+        today_my_encounters   = my_encounters.filter(visit_date=today).count()
+        monthly_my_encounters = my_encounters.filter(
+            visit_date__year=today.year, visit_date__month=today.month
+        ).count()
 
-    in_14_days = today + datetime.timedelta(days=14)
+        in_14_days = today + datetime.timedelta(days=14)
 
-    # Upcoming follow-ups: only encounters where no NEWER encounter exists for the same patient
-    newer_enc = Encounter.objects.filter(
-        patient=OuterRef('patient'),
-        visit_date__gt=OuterRef('follow_up_date'),
-    )
-    upcoming_followups_qs = (
-        my_encounters
-        .filter(follow_up_date__gte=today, follow_up_date__lte=in_14_days)
-        .annotate(has_newer=Exists(newer_enc))
-        .filter(has_newer=False)
-        .select_related('patient')
-        .order_by('follow_up_date')[:10]
-    )
-    upcoming_followups = []
-    for e in upcoming_followups_qs:
-        upcoming_followups.append({
-            'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
-            'patient_id':     e.patient.id,
-            'smart_id':       e.patient.smart_id,
-            'follow_up_date': str(e.follow_up_date),
-            'last_diagnosis': html_mod.escape(e.diagnosis),
-            'days_away':      (e.follow_up_date - today).days,
+        # Upcoming follow-ups: only encounters where no NEWER encounter exists for the same patient
+        newer_enc = Encounter.objects.filter(
+            patient=OuterRef('patient'),
+            visit_date__gt=OuterRef('follow_up_date'),
+        )
+        upcoming_followups_qs = (
+            my_encounters
+            .filter(follow_up_date__gte=today, follow_up_date__lte=in_14_days)
+            .annotate(has_newer=Exists(newer_enc))
+            .filter(has_newer=False)
+            .select_related('patient')
+            .order_by('follow_up_date')[:10]
+        )
+        upcoming_followups = []
+        for e in upcoming_followups_qs:
+            upcoming_followups.append({
+                'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
+                'patient_id':     e.patient.id,
+                'smart_id':       e.patient.smart_id,
+                'follow_up_date': str(e.follow_up_date),
+                'last_diagnosis': html_mod.escape(e.diagnosis),
+                'days_away':      (e.follow_up_date - today).days,
+            })
+
+        # Overdue: follow_up_date in the past and no newer encounter attended
+        overdue_qs = (
+            my_encounters
+            .filter(follow_up_date__lt=today)
+            .annotate(has_newer=Exists(newer_enc))
+            .filter(has_newer=False)
+            .select_related('patient')
+            .order_by('-follow_up_date')[:5]
+        )
+        overdue_followups = []
+        for e in overdue_qs:
+            overdue_followups.append({
+                'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
+                'patient_id':     e.patient.id,
+                'smart_id':       e.patient.smart_id,
+                'follow_up_date': str(e.follow_up_date),
+                'last_diagnosis': html_mod.escape(e.diagnosis),
+                'days_overdue':   (today - e.follow_up_date).days,
+            })
+
+        recent_enc_qs   = my_encounters.select_related('patient').order_by('-created_at')[:8]
+        recent_enc_data = []
+        for e in recent_enc_qs:
+            d = EncounterSerializer(e).data
+            d['patient_name'] = f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}'
+            d['smart_id']     = e.patient.smart_id
+            recent_enc_data.append(d)
+
+        my_top_diagnoses = list(
+            my_encounters.exclude(diagnosis='')
+            .values('diagnosis').annotate(cnt=Count('id')).order_by('-cnt')[:5]
+        )
+        my_enc_types = list(
+            my_encounters.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt')
+        )
+
+        raw = (my_encounters.filter(visit_date__gte=six_months_ago)
+               .values('visit_date').annotate(cnt=Count('id')))
+        month_counts: dict[str, int] = {}
+        for row in raw:
+            m = str(row['visit_date'])[:7]
+            month_counts[m] = month_counts.get(m, 0) + row['cnt']
+        monthly_trend = [{'month': m, 'cnt': c} for m, c in sorted(month_counts.items())]
+
+        recent_patients = (
+            Patient.objects.filter(_facility_filter(user))
+            .order_by('-registered_at')[:5]
+        )
+
+        return Response({
+            'role':           'doctor',
+            'clinician_name': html_mod.escape(user.name),
+            'facility':       html_mod.escape(user.facility_name),
+            'stats': {
+                'total_my_patients':      total_my_patients,
+                'total_my_encounters':    total_my_encounters,
+                'today_my_encounters':    today_my_encounters,
+                'monthly_my_encounters':  monthly_my_encounters,
+                'upcoming_followups':     len(upcoming_followups),
+                'overdue_followups':      len(overdue_followups),
+            },
+            'upcoming_followups': upcoming_followups,
+            'overdue_followups':  overdue_followups,
+            'recent_encounters':  recent_enc_data,
+            'top_diagnoses':      my_top_diagnoses,
+            'enc_types':          my_enc_types,
+            'monthly_trend':      monthly_trend,
+            'recent_patients':    PatientSerializer(recent_patients, many=True).data,
         })
-
-    # Overdue: follow_up_date in the past and no newer encounter attended
-    overdue_qs = (
-        my_encounters
-        .filter(follow_up_date__lt=today)
-        .annotate(has_newer=Exists(newer_enc))
-        .filter(has_newer=False)
-        .select_related('patient')
-        .order_by('-follow_up_date')[:5]
-    )
-    overdue_followups = []
-    for e in overdue_qs:
-        overdue_followups.append({
-            'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
-            'patient_id':     e.patient.id,
-            'smart_id':       e.patient.smart_id,
-            'follow_up_date': str(e.follow_up_date),
-            'last_diagnosis': html_mod.escape(e.diagnosis),
-            'days_overdue':   (today - e.follow_up_date).days,
-        })
-
-    recent_enc_qs   = my_encounters.select_related('patient').order_by('-created_at')[:8]
-    recent_enc_data = []
-    for e in recent_enc_qs:
-        d = EncounterSerializer(e).data
-        d['patient_name'] = f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}'
-        d['smart_id']     = e.patient.smart_id
-        recent_enc_data.append(d)
-
-    my_top_diagnoses = list(
-        my_encounters.exclude(diagnosis='')
-        .values('diagnosis').annotate(cnt=Count('id')).order_by('-cnt')[:5]
-    )
-    my_enc_types = list(
-        my_encounters.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt')
-    )
-
-    raw = (my_encounters.filter(visit_date__gte=six_months_ago)
-           .values('visit_date').annotate(cnt=Count('id')))
-    month_counts: dict[str, int] = {}
-    for row in raw:
-        m = str(row['visit_date'])[:7]
-        month_counts[m] = month_counts.get(m, 0) + row['cnt']
-    monthly_trend = [{'month': m, 'cnt': c} for m, c in sorted(month_counts.items())]
-
-    recent_patients = (
-        Patient.objects.filter(_facility_filter(user))
-        .order_by('-registered_at')[:5]
-    )
-
-    return Response({
-        'role':           'doctor',
-        'clinician_name': html_mod.escape(user.name),
-        'facility':       html_mod.escape(user.facility_name),
-        'stats': {
-            'total_my_patients':      total_my_patients,
-            'total_my_encounters':    total_my_encounters,
-            'today_my_encounters':    today_my_encounters,
-            'monthly_my_encounters':  monthly_my_encounters,
-            'upcoming_followups':     len(upcoming_followups),
-            'overdue_followups':      len(overdue_followups),
-        },
-        'upcoming_followups': upcoming_followups,
-        'overdue_followups':  overdue_followups,
-        'recent_encounters':  recent_enc_data,
-        'top_diagnoses':      my_top_diagnoses,
-        'enc_types':          my_enc_types,
-        'monthly_trend':      monthly_trend,
-        'recent_patients':    PatientSerializer(recent_patients, many=True).data,
-    })
+    except Exception as exc:
+        import traceback, logging
+        logging.getLogger(__name__).error('_doctor_dashboard error: %s\n%s', exc, traceback.format_exc())
+        return Response({'error': str(exc)}, status=500)
 
 
 def _nurse_dashboard(request):

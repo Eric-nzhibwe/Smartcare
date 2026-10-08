@@ -1,13 +1,13 @@
 /* ============================================================
-   DOCTOR DASHBOARD  — v4  (health-themed UI)
+   DOCTOR DASHBOARD  — v5  (refreshed UI)
    ============================================================ */
 
 function renderDoctorDashboard(d) {
   const el = document.getElementById('page-content');
   if (!el) return;
 
-  const s      = d.stats;
-  const _max   = (arr, fn) => arr.length ? arr.reduce((m, x) => Math.max(m, fn(x)), 0) || 1 : 1;
+  const s       = d.stats;
+  const _max    = (arr, fn) => arr.length ? arr.reduce((m, x) => Math.max(m, fn(x)), 0) || 1 : 1;
   const maxTrend = _max(d.monthly_trend || [], t => t.cnt);
   const maxDiag  = _max(d.top_diagnoses || [], x => x.cnt);
   const maxType  = _max(d.enc_types     || [], x => x.cnt);
@@ -16,85 +16,104 @@ function renderDoctorDashboard(d) {
   el.innerHTML = `
 
 <!-- ═══ BANNER ═══ -->
-<div class="dash-banner dash-banner--doctor">
-  <div class="dash-banner__icon"><i class="fa-solid fa-user-doctor"></i></div>
-  <div class="dash-banner__body">
-    <div class="dash-banner__name">${d.clinician_name}</div>
-    <div class="dash-banner__meta">
+<div style="background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+            border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;
+            display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 4px 16px rgba(15,76,129,.25)">
+  <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.15);
+              display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;flex-shrink:0">
+    <i class="fa-solid fa-user-doctor"></i>
+  </div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px">${d.clinician_name}</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:2px">
       <i class="fa-solid fa-hospital fa-fw" style="opacity:.7"></i>
-      ${d.facility} &nbsp;·&nbsp; Clinical Workstation &nbsp;·&nbsp; ${today}
+      ${d.facility} &nbsp;·&nbsp; ${today}
     </div>
   </div>
-  <div class="dash-banner__actions">
-    <button class="btn btn-primary btn-sm" onclick="showEncounterModalSearch()">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25)"
+            onclick="showEncounterModalSearch()">
       <i class="fa-solid fa-stethoscope"></i> New Encounter
     </button>
-    <button class="btn btn-outline btn-sm" onclick="navigate('patients')">
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25)"
+            onclick="navigate('patients')">
       <i class="fa-solid fa-users"></i> My Patients
     </button>
-    <button class="ai-cta-btn" onclick="navigateAI()">
+    <button class="ai-cta-btn btn-sm" onclick="navigateAI()">
       <i class="fa-solid fa-robot"></i> AI Assistant
       <span class="ai-badge">Groq</span>
     </button>
   </div>
 </div>
 
-<!-- ═══ KPI STATS ═══ -->
-<div class="stats-grid">
-  <div class="stat-card primary">
-    <div class="stat-top">
-      <div>
-        <div class="label">My Patients</div>
-        <div class="value">${s.total_my_patients}</div>
+<!-- ═══ KPI STRIP ═══ -->
+<div class="kpi-strip">
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--primary-ghost);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-users"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+      <div class="ksi-val">${s.total_my_patients}</div>
     </div>
-    <div class="sub">Unique patients seen</div>
+    <div class="ksi-label">My Patients</div>
+    <div class="ksi-sub">Unique patients seen</div>
   </div>
-  <div class="stat-card accent">
-    <div class="stat-top">
-      <div>
-        <div class="label">My Encounters</div>
-        <div class="value">${s.total_my_encounters}</div>
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-stethoscope"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-stethoscope"></i></div>
+      <div class="ksi-val">${s.total_my_encounters}</div>
     </div>
-    <div class="sub">${s.today_my_encounters} today &nbsp;·&nbsp; ${s.monthly_my_encounters} this month</div>
+    <div class="ksi-label">My Encounters</div>
+    <div class="ksi-sub">${s.today_my_encounters} today · ${s.monthly_my_encounters} this month</div>
   </div>
-  <div class="stat-card warn">
-    <div class="stat-top">
-      <div>
-        <div class="label">Upcoming Follow-ups</div>
-        <div class="value">${s.upcoming_followups}</div>
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--warn-light);color:var(--warn);display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-calendar-check"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+      <div class="ksi-val">${s.upcoming_followups}</div>
     </div>
-    <div class="sub">Next 14 days</div>
+    <div class="ksi-label">Upcoming Follow-ups</div>
+    <div class="ksi-sub">Next 14 days</div>
   </div>
-  <div class="stat-card danger">
-    <div class="stat-top">
-      <div>
-        <div class="label">Overdue Follow-ups</div>
-        <div class="value">${s.overdue_followups}</div>
+  <div class="kpi-strip-item">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--danger-light);color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:13px">
+        <i class="fa-solid fa-circle-exclamation"></i>
       </div>
-      <div class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+      <div class="ksi-val" style="${s.overdue_followups > 0 ? 'color:var(--danger)' : ''}">${s.overdue_followups}</div>
     </div>
-    <div class="sub">${s.overdue_followups > 0
-      ? '<span style="color:var(--danger)"><i class="fa-solid fa-triangle-exclamation fa-fw"></i> Needs attention</span>'
-      : '<span style="color:var(--accent)"><i class="fa-solid fa-check fa-fw"></i> All on schedule</span>'}</div>
+    <div class="ksi-label">Overdue Follow-ups</div>
+    <div class="ksi-sub">${s.overdue_followups > 0
+      ? '<span style="color:var(--danger)">Needs attention</span>'
+      : '<span style="color:var(--accent)">All on schedule</span>'}</div>
   </div>
 </div>
 
 <!-- ═══ OVERDUE ALERT ═══ -->
 ${(d.overdue_followups || []).length === 0 ? '' : `
-<div class="card mb-4 card--danger-border">
-  <div class="card-header" style="background:var(--danger-light)">
-    <h3 style="color:var(--danger)">
-      <span class="alert-dot"></span>
-      <i class="fa-solid fa-triangle-exclamation fa-fw"></i>
-      Overdue Follow-ups — Action Required
-    </h3>
-    <span class="badge badge-red">${d.overdue_followups.length} patient${d.overdue_followups.length !== 1 ? 's' : ''}</span>
+<div class="alert-banner mb-4">
+  <i class="fa-solid fa-triangle-exclamation"></i>
+  <div class="alert-banner-body">
+    <div class="alert-banner-title">Overdue Follow-ups — Action Required</div>
+    <div class="alert-banner-sub">${d.overdue_followups.length} patient${d.overdue_followups.length !== 1 ? 's' : ''} have missed their follow-up dates</div>
+  </div>
+  <button class="btn btn-sm" style="background:var(--danger);color:#fff;flex-shrink:0"
+          onclick="document.getElementById('overdue-table').scrollIntoView({behavior:'smooth'})">
+    View <i class="fa-solid fa-arrow-down"></i>
+  </button>
+</div>
+<div class="card mb-4" id="overdue-table">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--danger-light);color:var(--danger)">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+    </div>
+    <h3 style="color:var(--danger)">Overdue Follow-ups</h3>
+    <div class="chi-right">
+      <span class="badge badge-red">${d.overdue_followups.length} patient${d.overdue_followups.length !== 1 ? 's' : ''}</span>
+    </div>
   </div>
   <div class="table-wrap"><table>
     <thead><tr><th>Patient</th><th>SmartID</th><th>Was Due</th><th>Last Diagnosis</th><th>Days Overdue</th></tr></thead>
@@ -119,15 +138,22 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
 <!-- ═══ FOLLOW-UPS + WORKLOAD ═══ -->
 <div class="grid-2 mb-4">
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-calendar-check" style="color:var(--accent)"></i> Upcoming Follow-ups</h3>
-      <span class="badge badge-blue">${s.upcoming_followups} in 14 days</span>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--accent-light);color:var(--accent)">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <h3>Upcoming Follow-ups</h3>
+      <div class="chi-right">
+        <span class="badge badge-blue">${s.upcoming_followups} in 14 days</span>
+      </div>
     </div>
     <div class="table-wrap"><table>
       <thead><tr><th>Patient</th><th>SmartID</th><th>Due</th><th>Last Diagnosis</th></tr></thead>
       <tbody>
         ${(d.upcoming_followups || []).length === 0
-          ? `<tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-calendar-check" style="font-size:24px;color:var(--accent);display:block;margin-bottom:8px"></i><p>No upcoming follow-ups</p></div></td></tr>`
+          ? `<tr><td colspan="4"><div class="empty-state">
+               <i class="fa-solid fa-calendar-check" style="font-size:24px;color:var(--accent);display:block;margin-bottom:8px"></i>
+               <p>No upcoming follow-ups</p></div></td></tr>`
           : d.upcoming_followups.map(f => `
           <tr style="cursor:pointer" onclick="viewPatient(${f.patient_id})">
             <td class="patient-name">${f.patient_name}</td>
@@ -135,8 +161,7 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
             <td>
               <span class="badge ${f.days_away === 0 ? 'badge-warn' : f.days_away <= 3 ? 'badge-warn' : 'badge-blue'}">
                 ${f.days_away === 0 ? '<i class="fa-solid fa-star"></i> Today'
-                  : f.days_away === 1 ? 'Tomorrow'
-                  : 'In ' + f.days_away + 'd'}
+                  : f.days_away === 1 ? 'Tomorrow' : 'In ' + f.days_away + 'd'}
               </span>
             </td>
             <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.last_diagnosis || '—'}</td>
@@ -146,24 +171,23 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
   </div>
 
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-chart-line" style="color:var(--primary)"></i> My 6-Month Workload</h3>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+        <i class="fa-solid fa-chart-line"></i>
+      </div>
+      <h3>My 6-Month Workload</h3>
     </div>
     <div class="card-body">
       ${(d.monthly_trend || []).length === 0
         ? `<div class="empty-state"><p>No encounter data yet</p></div>`
-        : `<div class="trend-chart">
+        : `<div class="spark-bars">
             ${d.monthly_trend.map(m => `
-            <div class="trend-bar" style="height:${Math.max(6, Math.round((m.cnt / maxTrend) * 64))}px">
-              <div class="tip">${m.month}: ${m.cnt} encounter${m.cnt !== 1 ? 's' : ''}</div>
-            </div>`).join('')}
+            <div class="spark-bar" title="${m.month}: ${m.cnt}"
+                 style="height:${Math.max(8, Math.round((m.cnt / maxTrend) * 100))}%;background:var(--primary)"></div>
+            `).join('')}
           </div>
-          <div style="display:flex;justify-content:space-between;margin-top:8px">
-            ${d.monthly_trend.map(m => `
-            <div style="flex:1;text-align:center">
-              <div style="font-size:10px;color:var(--text3)">${m.month.slice(5)}</div>
-              <div style="font-size:9px;color:var(--text3);font-weight:600">${m.cnt}</div>
-            </div>`).join('')}
+          <div class="spark-labels">
+            ${d.monthly_trend.map(m => `<span class="spark-label">${m.month.slice(5)}<br><b style="color:var(--text)">${m.cnt}</b></span>`).join('')}
           </div>`}
     </div>
   </div>
@@ -172,8 +196,11 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
 <!-- ═══ DIAGNOSES + ENC TYPES ═══ -->
 <div class="grid-2 mb-4">
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-disease" style="color:var(--warn)"></i> My Top Diagnoses</h3>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--warn-light);color:var(--warn)">
+        <i class="fa-solid fa-disease"></i>
+      </div>
+      <h3>My Top Diagnoses</h3>
     </div>
     <div class="card-body">
       ${(d.top_diagnoses || []).length === 0
@@ -181,14 +208,20 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
         : `<div class="bar-chart">${d.top_diagnoses.map((x, i) => `
           <div class="bar-row">
             <div class="bar-label" title="${x.diagnosis}">${x.diagnosis}</div>
-            <div class="bar-track"><div class="bar-fill${i === 0 ? ' accent' : ''}" style="width:${Math.round((x.cnt / maxDiag) * 100)}%;transition:width .7s ${i * 0.09}s ease"></div></div>
+            <div class="bar-track">
+              <div class="bar-fill${i === 0 ? ' accent' : ''}"
+                   style="width:${Math.round((x.cnt / maxDiag) * 100)}%;transition:width .7s ${i * 0.09}s ease"></div>
+            </div>
             <div class="bar-val">${x.cnt}</div>
           </div>`).join('')}</div>`}
     </div>
   </div>
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-clipboard-list" style="color:var(--primary)"></i> Encounter Breakdown</h3>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+        <i class="fa-solid fa-clipboard-list"></i>
+      </div>
+      <h3>Encounter Breakdown</h3>
     </div>
     <div class="card-body">
       ${(d.enc_types || []).length === 0
@@ -196,7 +229,9 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
         : `<div class="bar-chart">${d.enc_types.map(e => `
           <div class="bar-row">
             <div class="bar-label">${e.encounter_type}</div>
-            <div class="bar-track"><div class="bar-fill" style="width:${Math.round((e.cnt / maxType) * 100)}%"></div></div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${Math.round((e.cnt / maxType) * 100)}%"></div>
+            </div>
             <div class="bar-val">${e.cnt}</div>
           </div>`).join('')}</div>`}
     </div>
@@ -206,9 +241,14 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
 <!-- ═══ RECENT ENCOUNTERS + PATIENTS ═══ -->
 <div class="grid-2 mb-4">
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary)"></i> My Recent Encounters</h3>
-      <button class="btn btn-ghost btn-sm" onclick="navigate('encounters')">View all →</button>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+      </div>
+      <h3>My Recent Encounters</h3>
+      <div class="chi-right">
+        <button class="btn btn-ghost btn-sm" onclick="navigate('encounters')">View all →</button>
+      </div>
     </div>
     <div class="table-wrap"><table>
       <thead><tr><th>Patient</th><th>Type</th><th>Diagnosis / Complaint</th><th>Date</th></tr></thead>
@@ -234,9 +274,14 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
   </div>
 
   <div class="card">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-user-plus" style="color:var(--accent)"></i> Recent Patients at ${d.facility}</h3>
-      <button class="btn btn-ghost btn-sm" onclick="navigate('patients')">View all →</button>
+    <div class="card-icon-header">
+      <div class="chi-icon" style="background:var(--accent-light);color:var(--accent)">
+        <i class="fa-solid fa-user-plus"></i>
+      </div>
+      <h3>Recent Patients — ${d.facility}</h3>
+      <div class="chi-right">
+        <button class="btn btn-ghost btn-sm" onclick="navigate('patients')">View all →</button>
+      </div>
     </div>
     <div class="table-wrap"><table>
       <thead><tr><th>Patient</th><th>SmartID</th><th>Age/Gender</th><th>Registered</th></tr></thead>
