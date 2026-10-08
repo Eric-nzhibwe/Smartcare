@@ -42,6 +42,9 @@ def _facility_filter(user):
     if user.role == 'admin':
         return Q()
     fac = user.facility_name
+    if not fac:
+        # User has no facility assigned — match nothing rather than blank rows
+        return Q(pk__in=[])
     return Q(facility=fac) | Q(facility_ref__name=fac)
 
 
@@ -297,85 +300,89 @@ def dashboard(request):
 
 
 def _admin_dashboard(request):
-    today          = datetime.date.today()
-    six_months_ago = today - datetime.timedelta(days=180)
+    try:
+        today          = datetime.date.today()
+        six_months_ago = today - datetime.timedelta(days=180)
 
-    total_patients    = Patient.objects.count()
-    total_encounters  = Encounter.objects.count()
-    today_encounters  = Encounter.objects.filter(visit_date=today).count()
-    monthly_encounters = Encounter.objects.filter(
-        visit_date__year=today.year, visit_date__month=today.month
-    ).count()
-    total_users = User.objects.count()
+        total_patients    = Patient.objects.count()
+        total_encounters  = Encounter.objects.count()
+        today_encounters  = Encounter.objects.filter(visit_date=today).count()
+        monthly_encounters = Encounter.objects.filter(
+            visit_date__year=today.year, visit_date__month=today.month
+        ).count()
+        total_users = User.objects.count()
 
-    gender_dist   = list(Patient.objects.values('gender').annotate(cnt=Count('id')).order_by('-cnt'))
-    province_dist = list(Patient.objects.values('province').annotate(cnt=Count('id')).order_by('-cnt')[:8])
-    enc_types     = list(Encounter.objects.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt'))
+        gender_dist   = list(Patient.objects.values('gender').annotate(cnt=Count('id')).order_by('-cnt'))
+        province_dist = list(Patient.objects.values('province').annotate(cnt=Count('id')).order_by('-cnt')[:8])
+        enc_types     = list(Encounter.objects.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt'))
 
-    facility_patients = list(
-        Patient.objects.values('facility').annotate(cnt=Count('id')).order_by('-cnt')[:8]
-    )
-    facility_encounters = list(
-        Encounter.objects.values('facility').annotate(cnt=Count('id')).order_by('-cnt')[:8]
-    )
+        facility_patients = list(
+            Patient.objects.values('facility').annotate(cnt=Count('id')).order_by('-cnt')[:8]
+        )
+        facility_encounters = list(
+            Encounter.objects.values('facility').annotate(cnt=Count('id')).order_by('-cnt')[:8]
+        )
 
-    raw = (Encounter.objects.filter(visit_date__gte=six_months_ago)
-           .values('visit_date').annotate(cnt=Count('id')))
-    month_counts: dict[str, int] = {}
-    for row in raw:
-        m = str(row['visit_date'])[:7]
-        month_counts[m] = month_counts.get(m, 0) + row['cnt']
-    monthly_trend = [{'month': m, 'cnt': c} for m, c in sorted(month_counts.items())]
+        raw = (Encounter.objects.filter(visit_date__gte=six_months_ago)
+               .values('visit_date').annotate(cnt=Count('id')))
+        month_counts: dict[str, int] = {}
+        for row in raw:
+            m = str(row['visit_date'])[:7]
+            month_counts[m] = month_counts.get(m, 0) + row['cnt']
+        monthly_trend = [{'month': m, 'cnt': c} for m, c in sorted(month_counts.items())]
 
-    recent_patients  = Patient.objects.order_by('-registered_at')[:5]
-    recent_encounters = Encounter.objects.select_related('patient').order_by('-created_at')[:5]
-    recent_enc_data  = []
-    for e in recent_encounters:
-        d = EncounterSerializer(e).data
-        d['patient_name'] = f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}'
-        d['smart_id']     = e.patient.smart_id
-        recent_enc_data.append(d)
+        recent_patients  = Patient.objects.order_by('-registered_at')[:5]
+        recent_encounters = Encounter.objects.select_related('patient').order_by('-created_at')[:5]
+        recent_enc_data  = []
+        for e in recent_encounters:
+            d = EncounterSerializer(e).data
+            d['patient_name'] = f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}'
+            d['smart_id']     = e.patient.smart_id
+            recent_enc_data.append(d)
 
-    top_diagnoses = list(
-        Encounter.objects.exclude(diagnosis='')
-        .values('diagnosis').annotate(cnt=Count('id')).order_by('-cnt')[:5]
-    )
+        top_diagnoses = list(
+            Encounter.objects.exclude(diagnosis='')
+            .values('diagnosis').annotate(cnt=Count('id')).order_by('-cnt')[:5]
+        )
 
-    week_ago     = today - datetime.timedelta(days=7)
-    new_this_week = Patient.objects.filter(registered_at__date__gte=week_ago).count()
+        week_ago     = today - datetime.timedelta(days=7)
+        new_this_week = Patient.objects.filter(registered_at__date__gte=week_ago).count()
 
-    # Data quality — server-side aggregation (avoids loading all patients on the client)
-    dq_no_phone  = Patient.objects.filter(Q(phone='') | Q(phone__isnull=True)).count()
-    dq_no_nrc    = Patient.objects.filter(Q(nrc_number='') | Q(nrc_number__isnull=True)).count()
-    dq_no_vitals = Encounter.objects.filter(
-        temperature__isnull=True, pulse__isnull=True, blood_pressure=''
-    ).count()
+        dq_no_phone  = Patient.objects.filter(Q(phone='') | Q(phone__isnull=True)).count()
+        dq_no_nrc    = Patient.objects.filter(Q(nrc_number='') | Q(nrc_number__isnull=True)).count()
+        dq_no_vitals = Encounter.objects.filter(
+            temperature__isnull=True, pulse__isnull=True, blood_pressure=''
+        ).count()
 
-    return Response({
-        'role':   'admin',
-        'stats': {
-            'total_patients':     total_patients,
-            'total_encounters':   total_encounters,
-            'today_encounters':   today_encounters,
-            'monthly_encounters': monthly_encounters,
-            'total_users':        total_users,
-            'new_this_week':      new_this_week,
-        },
-        'gender_dist':          gender_dist,
-        'province_dist':        province_dist,
-        'enc_types':            enc_types,
-        'facility_patients':    facility_patients,
-        'facility_encounters':  facility_encounters,
-        'monthly_trend':        monthly_trend,
-        'recent_patients':      PatientSerializer(recent_patients, many=True).data,
-        'recent_encounters':    recent_enc_data,
-        'top_diagnoses':        top_diagnoses,
-        'data_quality': {
-            'no_phone':  dq_no_phone,
-            'no_nrc':    dq_no_nrc,
-            'no_vitals': dq_no_vitals,
-        },
-    })
+        return Response({
+            'role':   'admin',
+            'stats': {
+                'total_patients':     total_patients,
+                'total_encounters':   total_encounters,
+                'today_encounters':   today_encounters,
+                'monthly_encounters': monthly_encounters,
+                'total_users':        total_users,
+                'new_this_week':      new_this_week,
+            },
+            'gender_dist':          gender_dist,
+            'province_dist':        province_dist,
+            'enc_types':            enc_types,
+            'facility_patients':    facility_patients,
+            'facility_encounters':  facility_encounters,
+            'monthly_trend':        monthly_trend,
+            'recent_patients':      PatientSerializer(recent_patients, many=True).data,
+            'recent_encounters':    recent_enc_data,
+            'top_diagnoses':        top_diagnoses,
+            'data_quality': {
+                'no_phone':  dq_no_phone,
+                'no_nrc':    dq_no_nrc,
+                'no_vitals': dq_no_vitals,
+            },
+        })
+    except Exception as exc:
+        import traceback, logging
+        logging.getLogger(__name__).error('_admin_dashboard error: %s\n%s', exc, traceback.format_exc())
+        return Response({'error': str(exc)}, status=500)
 
 
 def _doctor_dashboard(request):
@@ -497,145 +504,149 @@ def _doctor_dashboard(request):
 
 
 def _nurse_dashboard(request):
-    user      = request.user
-    today     = datetime.date.today()
-    week_ago  = today - datetime.timedelta(days=7)
-    in_7_days = today + datetime.timedelta(days=7)
+    try:
+        user      = request.user
+        today     = datetime.date.today()
+        week_ago  = today - datetime.timedelta(days=7)
+        in_7_days = today + datetime.timedelta(days=7)
 
-    facility_patients   = Patient.objects.filter(_facility_filter(user))
-    facility_encounters = Encounter.objects.filter(_facility_filter(user))
+        facility_patients   = Patient.objects.filter(_facility_filter(user))
+        facility_encounters = Encounter.objects.filter(_facility_filter(user))
 
-    total_patients    = facility_patients.count()
-    registered_today  = facility_patients.filter(registered_at__date=today).count()
-    registered_week   = facility_patients.filter(registered_at__date__gte=week_ago).count()
-    encounters_today  = facility_encounters.filter(visit_date=today).count()
-    encounters_month  = facility_encounters.filter(
-        visit_date__year=today.year, visit_date__month=today.month
-    ).count()
+        total_patients    = facility_patients.count()
+        registered_today  = facility_patients.filter(registered_at__date=today).count()
+        registered_week   = facility_patients.filter(registered_at__date__gte=week_ago).count()
+        encounters_today  = facility_encounters.filter(visit_date=today).count()
+        encounters_month  = facility_encounters.filter(
+            visit_date__year=today.year, visit_date__month=today.month
+        ).count()
 
-    todays_enc_qs = (
-        facility_encounters
-        .filter(visit_date=today)
-        .select_related('patient', 'clinician')
-        .order_by('-created_at')[:30]
-    )
-    todays_queue         = []
-    vitals_pending_count = 0
-    for e in todays_enc_qs:
-        has_vitals  = bool(e.temperature or e.pulse or e.blood_pressure or e.weight or e.oxygen_sat)
-        allergy_str = e.patient.allergies or ''
-        has_allergy = allergy_str not in ('', 'None', 'none', 'N/A')
-        if not has_vitals:
-            vitals_pending_count += 1
-        todays_queue.append({
-            'encounter_id':    e.id,
-            'patient_name':    f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
-            'patient_id':      e.patient.id,
-            'smart_id':        e.patient.smart_id,
-            'age':             (today - e.patient.date_of_birth).days // 365,
-            'gender':          e.patient.gender,
-            'encounter_type':  e.encounter_type,
-            'chief_complaint': html_mod.escape(e.chief_complaint),
-            'clinician_name':  html_mod.escape(e.clinician.name) if e.clinician else '—',
-            'has_vitals':      has_vitals,
-            'vitals_summary':  (
-                f'BP {e.blood_pressure}' if e.blood_pressure else
-                (f'T {e.temperature}°C'  if e.temperature  else '—')
-            ),
-            'has_allergy':     has_allergy,
-            'allergies':       html_mod.escape(allergy_str) if has_allergy else '',
+        todays_enc_qs = (
+            facility_encounters
+            .filter(visit_date=today)
+            .select_related('patient', 'clinician')
+            .order_by('-created_at')[:30]
+        )
+        todays_queue         = []
+        vitals_pending_count = 0
+        for e in todays_enc_qs:
+            has_vitals  = bool(e.temperature or e.pulse or e.blood_pressure or e.weight or e.oxygen_sat)
+            allergy_str = e.patient.allergies or ''
+            has_allergy = allergy_str not in ('', 'None', 'none', 'N/A')
+            if not has_vitals:
+                vitals_pending_count += 1
+            todays_queue.append({
+                'encounter_id':    e.id,
+                'patient_name':    f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
+                'patient_id':      e.patient.id,
+                'smart_id':        e.patient.smart_id,
+                'age':             (today - e.patient.date_of_birth).days // 365,
+                'gender':          e.patient.gender,
+                'encounter_type':  e.encounter_type,
+                'chief_complaint': html_mod.escape(e.chief_complaint),
+                'clinician_name':  html_mod.escape(e.clinician.name) if e.clinician else '—',
+                'has_vitals':      has_vitals,
+                'vitals_summary':  (
+                    f'BP {e.blood_pressure}' if e.blood_pressure else
+                    (f'T {e.temperature}°C'  if e.temperature  else '—')
+                ),
+                'has_allergy':     has_allergy,
+                'allergies':       html_mod.escape(allergy_str) if has_allergy else '',
+            })
+
+        newer_enc = Encounter.objects.filter(
+            patient=OuterRef('patient'),
+            visit_date__gt=OuterRef('follow_up_date'),
+        )
+        followup_qs = (
+            facility_encounters
+            .filter(follow_up_date__gte=today, follow_up_date__lte=in_7_days)
+            .annotate(has_newer=Exists(newer_enc))
+            .filter(has_newer=False)
+            .select_related('patient', 'clinician')
+            .order_by('follow_up_date')[:15]
+        )
+        upcoming_followups = []
+        for e in followup_qs:
+            upcoming_followups.append({
+                'encounter_id':   e.id,
+                'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
+                'patient_id':     e.patient.id,
+                'smart_id':       e.patient.smart_id,
+                'follow_up_date': str(e.follow_up_date),
+                'encounter_type': e.encounter_type,
+                'last_diagnosis': html_mod.escape(e.diagnosis),
+                'clinician_name': html_mod.escape(e.clinician.name) if e.clinician else '—',
+                'days_away':      (e.follow_up_date - today).days,
+            })
+
+        overdue_qs = (
+            facility_encounters
+            .filter(follow_up_date__lt=today)
+            .annotate(has_newer=Exists(newer_enc))
+            .filter(has_newer=False)
+            .select_related('patient', 'clinician')
+            .order_by('-follow_up_date')[:10]
+        )
+        overdue_followups = []
+        for e in overdue_qs:
+            overdue_followups.append({
+                'encounter_id':   e.id,
+                'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
+                'patient_id':     e.patient.id,
+                'smart_id':       e.patient.smart_id,
+                'follow_up_date': str(e.follow_up_date),
+                'encounter_type': e.encounter_type,
+                'last_diagnosis': html_mod.escape(e.diagnosis),
+                'clinician_name': html_mod.escape(e.clinician.name) if e.clinician else '—',
+                'days_overdue':   (today - e.follow_up_date).days,
+            })
+
+        allergy_qs = (
+            facility_patients
+            .exclude(allergies='').exclude(allergies='None')
+            .exclude(allergies='none').exclude(allergies='N/A')
+            .order_by('first_name')[:20]
+        )
+        allergy_patients = [{
+            'patient_id':   p.id,
+            'patient_name': f'{html_mod.escape(p.first_name)} {html_mod.escape(p.last_name)}',
+            'smart_id':     p.smart_id,
+            'allergies':    html_mod.escape(p.allergies),
+            'blood_group':  p.blood_group,
+        } for p in allergy_qs]
+
+        enc_types       = list(
+            facility_encounters.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt')
+        )
+        recent_patients = facility_patients.order_by('-registered_at')[:6]
+
+        return Response({
+            'role':              'nurse',
+            'nurse_name':        html_mod.escape(user.name),
+            'facility':          html_mod.escape(user.facility_name),
+            'stats': {
+                'total_patients':     total_patients,
+                'registered_today':   registered_today,
+                'registered_week':    registered_week,
+                'encounters_today':   encounters_today,
+                'encounters_month':   encounters_month,
+                'vitals_pending':     vitals_pending_count,
+                'upcoming_followups': len(upcoming_followups),
+                'overdue_followups':  len(overdue_followups),
+                'allergy_count':      len(allergy_patients),
+            },
+            'todays_queue':       todays_queue,
+            'upcoming_followups': upcoming_followups,
+            'overdue_followups':  overdue_followups,
+            'allergy_patients':   allergy_patients,
+            'enc_types':          enc_types,
+            'recent_patients':    PatientSerializer(recent_patients, many=True).data,
         })
-
-    # Upcoming follow-ups — exclude those that have already been attended
-    newer_enc = Encounter.objects.filter(
-        patient=OuterRef('patient'),
-        visit_date__gt=OuterRef('follow_up_date'),
-    )
-    followup_qs = (
-        facility_encounters
-        .filter(follow_up_date__gte=today, follow_up_date__lte=in_7_days)
-        .annotate(has_newer=Exists(newer_enc))
-        .filter(has_newer=False)
-        .select_related('patient', 'clinician')
-        .order_by('follow_up_date')[:15]
-    )
-    upcoming_followups = []
-    for e in followup_qs:
-        upcoming_followups.append({
-            'encounter_id':   e.id,
-            'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
-            'patient_id':     e.patient.id,
-            'smart_id':       e.patient.smart_id,
-            'follow_up_date': str(e.follow_up_date),
-            'encounter_type': e.encounter_type,
-            'last_diagnosis': html_mod.escape(e.diagnosis),
-            'clinician_name': html_mod.escape(e.clinician.name) if e.clinician else '—',
-            'days_away':      (e.follow_up_date - today).days,
-        })
-
-    overdue_qs = (
-        facility_encounters
-        .filter(follow_up_date__lt=today)
-        .annotate(has_newer=Exists(newer_enc))
-        .filter(has_newer=False)
-        .select_related('patient', 'clinician')
-        .order_by('-follow_up_date')[:10]
-    )
-    overdue_followups = []
-    for e in overdue_qs:
-        overdue_followups.append({
-            'encounter_id':   e.id,
-            'patient_name':   f'{html_mod.escape(e.patient.first_name)} {html_mod.escape(e.patient.last_name)}',
-            'patient_id':     e.patient.id,
-            'smart_id':       e.patient.smart_id,
-            'follow_up_date': str(e.follow_up_date),
-            'encounter_type': e.encounter_type,
-            'last_diagnosis': html_mod.escape(e.diagnosis),
-            'clinician_name': html_mod.escape(e.clinician.name) if e.clinician else '—',
-            'days_overdue':   (today - e.follow_up_date).days,
-        })
-
-    allergy_qs = (
-        facility_patients
-        .exclude(allergies='').exclude(allergies='None')
-        .exclude(allergies='none').exclude(allergies='N/A')
-        .order_by('first_name')[:20]
-    )
-    allergy_patients = [{
-        'patient_id':   p.id,
-        'patient_name': f'{html_mod.escape(p.first_name)} {html_mod.escape(p.last_name)}',
-        'smart_id':     p.smart_id,
-        'allergies':    html_mod.escape(p.allergies),
-        'blood_group':  p.blood_group,
-    } for p in allergy_qs]
-
-    enc_types       = list(
-        facility_encounters.values('encounter_type').annotate(cnt=Count('id')).order_by('-cnt')
-    )
-    recent_patients = facility_patients.order_by('-registered_at')[:6]
-
-    return Response({
-        'role':              'nurse',
-        'nurse_name':        html_mod.escape(user.name),
-        'facility':          html_mod.escape(user.facility_name),
-        'stats': {
-            'total_patients':     total_patients,
-            'registered_today':   registered_today,
-            'registered_week':    registered_week,
-            'encounters_today':   encounters_today,
-            'encounters_month':   encounters_month,
-            'vitals_pending':     vitals_pending_count,
-            'upcoming_followups': len(upcoming_followups),
-            'overdue_followups':  len(overdue_followups),
-            'allergy_count':      len(allergy_patients),
-        },
-        'todays_queue':       todays_queue,
-        'upcoming_followups': upcoming_followups,
-        'overdue_followups':  overdue_followups,
-        'allergy_patients':   allergy_patients,
-        'enc_types':          enc_types,
-        'recent_patients':    PatientSerializer(recent_patients, many=True).data,
-    })
+    except Exception as exc:
+        import traceback, logging
+        logging.getLogger(__name__).error('_nurse_dashboard error: %s\n%s', exc, traceback.format_exc())
+        return Response({'error': str(exc)}, status=500)
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────

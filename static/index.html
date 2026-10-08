@@ -658,14 +658,14 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
-<script src="/static/js/dashboard.doctor.js" defer></script>
-<script src="/static/js/dashboard.nurse.js" defer></script>
-<script src="/static/js/dashboard.admin.js" defer></script>
-<script src="/static/js/pages.js" defer></script>
-<script src="/static/js/reports.js" defer></script>
-<script src="/static/js/ai.js" defer></script>
+<script src="/static/js/dashboard.doctor.js"></script>
+<script src="/static/js/dashboard.nurse.js"></script>
+<script src="/static/js/dashboard.admin.js"></script>
+<script src="/static/js/pages.js"></script>
+<script src="/static/js/reports.js"></script>
+<script src="/static/js/ai.js"></script>
 <!-- role-dashboards.js removed — was duplicate dead code -->
-<script defer>
+<script>
 /* ═══════════════════════════════════════════════════════
    APP CORE — auth, routing, helpers
    ═══════════════════════════════════════════════════════ */
@@ -677,7 +677,18 @@ let currentUser  = JSON.parse(localStorage.getItem('emr_user') || 'null');
 let currentPage  = 'dashboard';
 let _refreshTimer = null;
 
-/* ── role nav ── */
+/* ── page router — defined early so navigate() can reference it ── */
+function pages_dispatch(page) {
+  const map = {
+    dashboard:  renderDashboard,
+    patients:   renderPatients,
+    encounters: renderEncounters,
+    reports:    renderReports,
+    users:      renderUsers,
+  };
+  const fn = map[page];
+  if (fn) fn(); else console.warn('Unknown page:', page);
+}
 const ROLE_NAV = {
   doctor: `
     <div class="nav-section">Clinical</div>
@@ -892,7 +903,7 @@ function navigate(page) {
   document.getElementById('page-title').textContent = titles[page] || page;
   document.getElementById('page-content').innerHTML = _skeletonFor(page);
   closeSidebar();
-  pages_map[page]();
+  pages_dispatch(page);
 }
 
 /* ── skeleton screens ── */
@@ -1091,21 +1102,13 @@ async function renderDashboard() {
   }
 }
 
-/* ── page router ── */
-const pages_map = {
-  dashboard:  renderDashboard,
-  patients:   () => renderPatients(),
-  encounters: () => renderEncounters(),
-  reports:    renderReports,
-  users:      renderUsers,
-};
-
 /* ── init ── */
 if (token && currentUser) {
   _scheduleRefresh();
   showApp();
 } else {
   document.getElementById('login-screen').style.display = 'flex';
-}</script>
+}
+</script>
 </body>
 </html>
