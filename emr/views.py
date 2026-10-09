@@ -147,19 +147,19 @@ def patients(request):
         count = Patient.objects.select_for_update().count()
         smart_id = f"SC-{datetime.date.today().year}-{str(count + 1).zfill(6)}"
 
-        data = request.data.copy()
-        data['smart_id'] = smart_id
-
-        serializer = PatientSerializer(data=data)
+        serializer = PatientSerializer(data=request.data)
         if serializer.is_valid():
-            patient = serializer.save(registered_by=request.user)
+            patient = serializer.save(
+                smart_id=smart_id,
+                registered_by=request.user,
+            )
             _log(request.user, 'create', 'Patient', patient.id,
                  f'Registered {patient.first_name} {patient.last_name} ({smart_id})')
             return Response(
                 {'success': True, 'smart_id': smart_id, 'id': patient.id},
                 status=status.HTTP_201_CREATED,
             )
-    return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET', 'PUT'])
