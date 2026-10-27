@@ -108,10 +108,11 @@ def me(request):
     """GET /api/me — return current user payload."""
     user = request.user
     return Response({
-        'user_id':  user.id,
-        'name':     html_mod.escape(user.name),
-        'role':     user.role,
-        'facility': html_mod.escape(user.facility_name),
+        'user_id':    user.id,
+        'name':       html_mod.escape(user.name),
+        'role':       user.role,
+        'facility':   html_mod.escape(user.facility_name),
+        'department': html_mod.escape(user.department),
     })
 
 
@@ -481,6 +482,7 @@ def _doctor_dashboard(request):
             'role':           'doctor',
             'clinician_name': html_mod.escape(user.name),
             'facility':       html_mod.escape(user.facility_name),
+            'department':     html_mod.escape(user.department),
             'stats': {
                 'total_my_patients':      total_my_patients,
                 'total_my_encounters':    total_my_encounters,
@@ -625,6 +627,7 @@ def _nurse_dashboard(request):
             'role':              'nurse',
             'nurse_name':        html_mod.escape(user.name),
             'facility':          html_mod.escape(user.facility_name),
+            'department':        html_mod.escape(user.department),
             'stats': {
                 'total_patients':     total_patients,
                 'registered_today':   registered_today,

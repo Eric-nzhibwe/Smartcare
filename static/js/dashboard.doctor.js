@@ -1,13 +1,261 @@
 /* ============================================================
-   DOCTOR DASHBOARD  — v5  (refreshed UI)
+   DOCTOR DASHBOARD  — v6  (department-aware specialty panels)
    ============================================================ */
 
+/* ── Specialty panel — unique per department ───────────────── */
+function _deptPanel(d) {
+  const dept = (d.department || '').toLowerCase();
+
+  /* ── Internal Medicine ── */
+  if (dept.includes('internal')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--primary)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+      <i class="fa-solid fa-pills"></i>
+    </div>
+    <h3>Internal Medicine — Daily Focus</h3>
+    <div class="chi-right"><span class="badge badge-blue">Internal Medicine</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Checklist for chronic-disease patients seen today. Tick off as you go.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-virus-covid',     'var(--danger)',  'HIV/ART patients: confirm VL status &amp; regimen'],
+        ['fa-mosquito',        'var(--warn)',    'Malaria cases: verify AL completion &amp; schedule follow-up'],
+        ['fa-heart',           'var(--primary)', 'Hypertension: review BP readings &amp; medication adherence'],
+        ['fa-droplet',         'var(--accent)',  'Diabetes: check blood glucose records'],
+        ['fa-lungs',           'var(--primary)', 'Respiratory: flag any low SpO₂ (&lt;94%) patients'],
+        ['fa-notes-medical',   'var(--text2)',   'Discharge summaries: complete outstanding notes'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="navigate('encounters')">
+        <i class="fa-solid fa-stethoscope"></i> ART Encounters
+      </button>
+      <button class="btn btn-sm" style="background:var(--warn-light);color:var(--warn)"
+              onclick="showEncounterModalSearch()">
+        <i class="fa-solid fa-plus"></i> New Encounter
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── Cardiology ── */
+  if (dept.includes('cardiol')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--danger)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--danger-light);color:var(--danger)">
+      <i class="fa-solid fa-heart-pulse"></i>
+    </div>
+    <h3>Cardiology — Monitoring Priorities</h3>
+    <div class="chi-right"><span class="badge badge-red">Cardiology</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Cardiac monitoring tasks and high-priority patient alerts for today.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-gauge-high',      'var(--danger)',  'Hypertensive urgency patients: BP &gt;180/120 — review immediately'],
+        ['fa-heart-crack',     'var(--danger)',  'Chest pain presentations: confirm ECG ordered &amp; reviewed'],
+        ['fa-pills',           'var(--primary)', 'Anti-hypertensives: verify patients have adequate supply'],
+        ['fa-calendar-check',  'var(--accent)',  'Post-admission follow-ups: cardiac patients discharged this month'],
+        ['fa-stethoscope',     'var(--primary)', 'Auscultation findings: document murmurs or arrhythmias'],
+        ['fa-file-waveform',   'var(--warn)',    'Referral letters: complete pending cardiology referrals'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger)"
+              onclick="navigate('encounters')">
+        <i class="fa-solid fa-heart-pulse"></i> Cardiac Encounters
+      </button>
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="navigateAI()">
+        <i class="fa-solid fa-robot"></i> AI Clinical Assist
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── General Practice ── */
+  if (dept.includes('general')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--accent)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--accent-light);color:var(--accent)">
+      <i class="fa-solid fa-house-medical"></i>
+    </div>
+    <h3>General Practice — Today's Task List</h3>
+    <div class="chi-right"><span class="badge badge-green">General Practice</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Daily GP workflow. Review referrals, complete notes, and manage your patient queue.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-clipboard-check',  'var(--accent)',  'Morning queue: review all booked patients for today'],
+        ['fa-right-from-bracket','var(--warn)',   'Referrals: complete outstanding referral letters'],
+        ['fa-prescription',     'var(--primary)', 'Prescriptions: sign off repeat scripts awaiting approval'],
+        ['fa-triangle-exclamation','var(--danger)','Urgent walk-ins: triage any unscheduled patients'],
+        ['fa-notes-medical',    'var(--text2)',   'SOAP notes: finalise all incomplete encounter notes'],
+        ['fa-phone',            'var(--accent)',  'Recall reminders: contact overdue chronic patients'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--accent-light);color:var(--accent)"
+              onclick="showEncounterModalSearch()">
+        <i class="fa-solid fa-user-plus"></i> New Consultation
+      </button>
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="navigate('patients')">
+        <i class="fa-solid fa-users"></i> Patient List
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── Surgery ── */
+  if (dept.includes('surg')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--warn)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--warn-light);color:var(--warn)">
+      <i class="fa-solid fa-scalpel"></i>
+    </div>
+    <h3>Surgery — Pre &amp; Post-Op Checklist</h3>
+    <div class="chi-right"><span class="badge badge-warn">Surgery</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Surgical safety checklist — complete before and after each procedure.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pre-Operative</div>
+        <div class="dept-checklist">
+          ${[
+            ['fa-file-medical',    'var(--primary)', 'Consent form signed &amp; documented'],
+            ['fa-vials',           'var(--accent)',  'Blood group &amp; cross-match confirmed'],
+            ['fa-ban',             'var(--warn)',    'Allergies reviewed &amp; flagged to theatre'],
+            ['fa-syringe',         'var(--primary)', 'Anaesthetic review completed'],
+          ].map(([ic, col, txt]) => `
+          <label class="dept-check-row">
+            <input type="checkbox" class="dept-cb">
+            <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+            <span>${txt}</span>
+          </label>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Post-Operative</div>
+        <div class="dept-checklist">
+          ${[
+            ['fa-heart-pulse',     'var(--danger)',  'Vitals stable — hourly monitoring confirmed'],
+            ['fa-bandage',         'var(--warn)',    'Wound dressing reviewed, no signs of infection'],
+            ['fa-pills',           'var(--primary)', 'Analgesia &amp; antibiotics prescribed &amp; charted'],
+            ['fa-calendar-check',  'var(--accent)',  'Discharge plan &amp; follow-up date set'],
+          ].map(([ic, col, txt]) => `
+          <label class="dept-check-row">
+            <input type="checkbox" class="dept-cb">
+            <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+            <span>${txt}</span>
+          </label>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--warn-light);color:var(--warn)"
+              onclick="navigate('encounters')">
+        <i class="fa-solid fa-clipboard-list"></i> Inpatient List
+      </button>
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="showEncounterModalSearch()">
+        <i class="fa-solid fa-plus"></i> Record Procedure
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── Obs & Gynaecology ── */
+  if (dept.includes('obs') || dept.includes('gyn')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid #e879a6">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:#fce7f3;color:#db2777">
+      <i class="fa-solid fa-person-pregnant"></i>
+    </div>
+    <h3>Obs &amp; Gynaecology — Antenatal Tracker</h3>
+    <div class="chi-right"><span class="badge" style="background:#fce7f3;color:#db2777">Obs &amp; Gynae</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Antenatal care priorities and MCH checklist for today's clinic.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-person-pregnant',  '#db2777',        'ANC visits: confirm all 8 contacts are on track'],
+        ['fa-droplet',          'var(--danger)',   'Haemoglobin: flag anaemia (Hb &lt;10 g/dL) patients'],
+        ['fa-gauge',            'var(--warn)',     'Pre-eclampsia screen: BP &gt;140/90 — escalate immediately'],
+        ['fa-syringe',          'var(--primary)',  'TT &amp; IPTp doses: verify immunisation &amp; malaria prophylaxis'],
+        ['fa-baby',             '#db2777',         'Foetal movements: confirm patients reporting movement'],
+        ['fa-notes-medical',    'var(--text2)',    'Delivery plans: document birth plans for &ge;36 week patients'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:#fce7f3;color:#db2777"
+              onclick="navigate('encounters')">
+        <i class="fa-solid fa-person-pregnant"></i> MCH Encounters
+      </button>
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="navigateAI()">
+        <i class="fa-solid fa-robot"></i> AI Clinical Assist
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── fallback: no department panel ── */
+  return '';
+}
+
+/* ── Main render ────────────────────────────────────────────── */
 function renderDoctorDashboard(d) {
   const el = document.getElementById('page-content');
   if (!el) return;
 
-  const s       = d.stats;
-  const _max    = (arr, fn) => arr.length ? arr.reduce((m, x) => Math.max(m, fn(x)), 0) || 1 : 1;
+  const s        = d.stats;
+  const _max     = (arr, fn) => arr.length ? arr.reduce((m, x) => Math.max(m, fn(x)), 0) || 1 : 1;
   const maxTrend = _max(d.monthly_trend || [], t => t.cnt);
   const maxDiag  = _max(d.top_diagnoses || [], x => x.cnt);
   const maxType  = _max(d.enc_types     || [], x => x.cnt);
@@ -27,7 +275,7 @@ function renderDoctorDashboard(d) {
     <div style="font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px">${d.clinician_name}</div>
     <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:2px">
       <i class="fa-solid fa-hospital fa-fw" style="opacity:.7"></i>
-      ${d.facility} &nbsp;·&nbsp; ${today}
+      ${d.facility}${d.department ? ' &nbsp;·&nbsp; ' + d.department : ''} &nbsp;·&nbsp; ${today}
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -192,6 +440,9 @@ ${(d.overdue_followups || []).length === 0 ? '' : `
     </div>
   </div>
 </div>
+
+<!-- ═══ SPECIALTY PANEL (unique per department) ═══ -->
+${_deptPanel(d)}
 
 <!-- ═══ DIAGNOSES + ENC TYPES ═══ -->
 <div class="grid-2 mb-4">

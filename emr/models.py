@@ -44,6 +44,8 @@ class User(AbstractUser):
 
     name     = models.CharField(max_length=150)
     role     = models.CharField(max_length=20, choices=ROLE_CHOICES, default='nurse')
+    # Optional department / speciality shown in the dashboard banner
+    department = models.CharField(max_length=100, blank=True, default='')
     # FK to canonical Facility — nullable so existing rows and migrations don't break
     facility_ref = models.ForeignKey(
         Facility, null=True, blank=True,

@@ -30,10 +30,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Keep the refresh token for the client to use for silent re-auth
         data['token'] = data.pop('access')   # frontend expects key 'token'
         data['user'] = {
-            'id':       user.id,
-            'name':     _esc(user.name),
-            'role':     user.role,
-            'facility': _esc(user.facility_name),
+            'id':         user.id,
+            'name':       _esc(user.name),
+            'role':       user.role,
+            'facility':   _esc(user.facility_name),
+            'department': _esc(user.department),
         }
         return data
 

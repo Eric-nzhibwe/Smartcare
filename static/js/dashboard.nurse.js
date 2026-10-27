@@ -1,7 +1,252 @@
 /* ============================================================
-   NURSE DASHBOARD  — v5  (refreshed UI)
+   NURSE DASHBOARD  — v6  (department-aware specialty panels)
    ============================================================ */
 
+/* ── Specialty panel — unique per nurse department ─────────── */
+function _nurseDeptPanel(d) {
+  const dept = (d.department || '').toLowerCase();
+
+  /* ── OPD / Triage ── */
+  if (dept.includes('opd') || dept.includes('triage')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--primary)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+      <i class="fa-solid fa-clipboard-list"></i>
+    </div>
+    <h3>OPD Triage — Priority Focus</h3>
+    <div class="chi-right"><span class="badge badge-blue">OPD / Triage</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Triage workflow checklist. Work through pending patients by priority.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-triangle-exclamation','var(--danger)',  'Priority 1 (Red): identify &amp; escalate immediately — chest pain, difficulty breathing'],
+        ['fa-exclamation',         'var(--warn)',    'Priority 2 (Yellow): record vitals for all urgent cases within 15 mins'],
+        ['fa-user-plus',           'var(--accent)',  'New walk-ins: register &amp; assign queue numbers'],
+        ['fa-heart-pulse',         'var(--primary)', 'Pending vitals: complete all outstanding triage recordings'],
+        ['fa-ban',                 'var(--danger)',  'Allergy checks: flag known allergies before patient sees doctor'],
+        ['fa-right-from-bracket',  'var(--text2)',   'Discharge: ensure all discharged patients have a follow-up date'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="startBatchTriage()">
+        <i class="fa-solid fa-bolt"></i> Batch Triage
+      </button>
+      <button class="btn btn-sm" style="background:var(--accent-light);color:var(--accent)"
+              onclick="showRegisterModal()">
+        <i class="fa-solid fa-user-plus"></i> Register Patient
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── ART Clinic ── */
+  if (dept.includes('art')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--primary)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--primary-ghost);color:var(--primary)">
+      <i class="fa-solid fa-virus-covid"></i>
+    </div>
+    <h3>ART Clinic — Adherence &amp; Monitoring</h3>
+    <div class="chi-right"><span class="badge badge-blue">ART Clinic</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      HIV/ART patient monitoring tasks. Review adherence and flag any concerns.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-pills',             'var(--primary)', 'Dispense ART: confirm all patients collected their monthly supply'],
+        ['fa-file-waveform',     'var(--accent)',  'Viral Load: identify patients due for VL testing this month'],
+        ['fa-user-xmark',        'var(--danger)',  'Lost to follow-up: flag patients who missed last visit'],
+        ['fa-shield-virus',      'var(--warn)',    'Opportunistic infections: screen for TB symptoms at each visit'],
+        ['fa-weight-scale',      'var(--primary)', 'Nutritional assessment: record weight &amp; flag underweight patients'],
+        ['fa-comments',          'var(--accent)',  'Adherence counselling: refer non-adherent patients to counsellor'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="navigate('encounters')">
+        <i class="fa-solid fa-stethoscope"></i> ART Encounters
+      </button>
+      <button class="btn btn-sm" style="background:var(--warn-light);color:var(--warn)"
+              onclick="navigateAI()">
+        <i class="fa-solid fa-robot"></i> AI Triage
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── Inpatient Ward ── */
+  if (dept.includes('inpatient') || dept.includes('ward')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--warn)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--warn-light);color:var(--warn)">
+      <i class="fa-solid fa-bed-pulse"></i>
+    </div>
+    <h3>Inpatient Ward — Round Checklist</h3>
+    <div class="chi-right"><span class="badge badge-warn">Inpatient Ward</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Morning &amp; evening ward round tasks. Complete before handover.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Morning Round</div>
+        <div class="dept-checklist">
+          ${[
+            ['fa-heart-pulse',    'var(--danger)',  'Vitals: record for all admitted patients'],
+            ['fa-pills',          'var(--primary)', 'Medications: confirm morning drugs administered'],
+            ['fa-bandage',        'var(--warn)',     'Wound checks: document dressing status'],
+          ].map(([ic, col, txt]) => `
+          <label class="dept-check-row">
+            <input type="checkbox" class="dept-cb">
+            <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+            <span>${txt}</span>
+          </label>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Evening Handover</div>
+        <div class="dept-checklist">
+          ${[
+            ['fa-clipboard-check', 'var(--accent)', 'Handover notes: complete for all patients'],
+            ['fa-right-from-bracket','var(--text2)', 'Discharges: process &amp; ensure follow-up scheduled'],
+            ['fa-bed',             'var(--primary)', 'Bed management: update bed occupancy sheet'],
+          ].map(([ic, col, txt]) => `
+          <label class="dept-check-row">
+            <input type="checkbox" class="dept-cb">
+            <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+            <span>${txt}</span>
+          </label>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--warn-light);color:var(--warn)"
+              onclick="showVitalsSearchModal()">
+        <i class="fa-solid fa-heart-pulse"></i> Record Vitals
+      </button>
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="navigate('patients')">
+        <i class="fa-solid fa-users"></i> Ward Patients
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── MCH / Antenatal ── */
+  if (dept.includes('mch') || dept.includes('antenatal')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid #e879a6">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:#fce7f3;color:#db2777">
+      <i class="fa-solid fa-person-pregnant"></i>
+    </div>
+    <h3>MCH / Antenatal — Clinic Checklist</h3>
+    <div class="chi-right"><span class="badge" style="background:#fce7f3;color:#db2777">MCH / Antenatal</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      Maternal &amp; child health tasks. Review all ANC and immunisation records.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-syringe',          'var(--primary)',  'Immunisations: verify child vaccination cards are up to date'],
+        ['fa-person-pregnant',  '#db2777',         'ANC clients: confirm all booked antenatal visits attended'],
+        ['fa-droplet',          'var(--danger)',   'PMTCT: HIV-positive mothers — confirm ARV prophylaxis given'],
+        ['fa-weight-scale',     'var(--accent)',   'Child growth: plot weight &amp; flag stunting or wasting'],
+        ['fa-gauge',            'var(--warn)',     'BP monitoring: screen all ANC clients for pre-eclampsia'],
+        ['fa-notes-medical',    'var(--text2)',    'Maternity register: update all delivery and birth records'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:#fce7f3;color:#db2777"
+              onclick="navigate('encounters')">
+        <i class="fa-solid fa-person-pregnant"></i> MCH Encounters
+      </button>
+      <button class="btn btn-sm" style="background:var(--accent-light);color:var(--accent)"
+              onclick="showRegisterModal()">
+        <i class="fa-solid fa-user-plus"></i> Register Patient
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  /* ── TB Clinic ── */
+  if (dept.includes('tb')) {
+    return `
+<div class="card mb-4" style="border-left:4px solid var(--accent)">
+  <div class="card-icon-header">
+    <div class="chi-icon" style="background:var(--accent-light);color:var(--accent)">
+      <i class="fa-solid fa-lungs-virus"></i>
+    </div>
+    <h3>TB Clinic — DOTS &amp; Contact Tracing</h3>
+    <div class="chi-right"><span class="badge badge-green">TB Clinic</span></div>
+  </div>
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+      TB programme tasks — DOTS adherence, contact tracing, and treatment monitoring.
+    </p>
+    <div class="dept-checklist">
+      ${[
+        ['fa-pills',             'var(--primary)',  'DOTS: observe medication intake for all active TB patients today'],
+        ['fa-people-arrows',     'var(--accent)',   'Contact tracing: follow up on household contacts identified this week'],
+        ['fa-vials',             'var(--warn)',     'Sputum samples: ensure Month 2, 5 &amp; 6 smears are collected on time'],
+        ['fa-user-xmark',        'var(--danger)',   'Treatment interruptions: identify &amp; recall patients who missed doses'],
+        ['fa-shield-halved',     'var(--primary)',  'MDR-TB screen: flag any patients with poor treatment response'],
+        ['fa-file-medical',      'var(--text2)',    'TB register: update outcomes for completed treatment cases'],
+      ].map(([ic, col, txt]) => `
+      <label class="dept-check-row">
+        <input type="checkbox" class="dept-cb">
+        <i class="fa-solid ${ic}" style="color:${col};width:16px;text-align:center"></i>
+        <span>${txt}</span>
+      </label>`).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--accent-light);color:var(--accent)"
+              onclick="navigate('encounters')">
+        <i class="fa-solid fa-lungs-virus"></i> TB Encounters
+      </button>
+      <button class="btn btn-sm" style="background:var(--primary-ghost);color:var(--primary)"
+              onclick="navigateAI()">
+        <i class="fa-solid fa-robot"></i> AI Triage
+      </button>
+    </div>
+  </div>
+</div>`;
+  }
+
+  return '';
+}
+
+/* ── Main render ────────────────────────────────────────────── */
 function renderNurseDashboard(d) {
   const el = document.getElementById('page-content');
   if (!el) return;
@@ -29,7 +274,7 @@ function renderNurseDashboard(d) {
     <div style="font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px">${d.nurse_name}</div>
     <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px">
       <i class="fa-solid fa-hospital fa-fw" style="opacity:.7"></i>
-      ${d.facility} &nbsp;·&nbsp; Nursing Station &nbsp;·&nbsp; ${today}
+      ${d.facility} &nbsp;·&nbsp; ${d.department ? d.department + ' &nbsp;·&nbsp; ' : 'Nursing Station &nbsp;·&nbsp; '}${today}
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -162,6 +407,9 @@ function renderNurseDashboard(d) {
     </tbody>
   </table></div>
 </div>
+
+<!-- ═══ SPECIALTY PANEL (unique per department) ═══ -->
+${_nurseDeptPanel(d)}
 
 <!-- ═══ FOLLOW-UPS ═══ -->
 <div class="grid-2 mb-4">

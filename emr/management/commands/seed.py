@@ -5,11 +5,26 @@ Usage:
     python manage.py seed
     python manage.py seed --flush   # clears existing data first
 
-Demo credentials (passwords meet the 8-char, non-common validator requirements):
-    doctor  / Doctor#2026
-    nurse   / Nurse#2026
-    admin   / Admin#2026
-    doctor2 / Doctor#2026
+Demo credentials:
+    Doctors
+    -------
+    Dr Mulenga   / Mulenga#2026    (UTH Lusaka)
+    Dr Namwinga  / Namwinga#2026   (Ndola Central)
+    Dr Peter     / Peter#2026      (Matero Level One)
+    Dr Edward    / Edward#2026     (Levy Mwanawasa)
+    Dr Chilufya  / Chilufya#2026   (Livingstone GH)
+
+    Nurses
+    ------
+    Nurse Chanda  / Chanda#2026    (Chipata General)
+    Nurse Mutale  / Mutale#2026    (UTH Lusaka)
+    Nurse Bwalya  / Bwalya#2026    (Ndola Central)
+    Nurse Thandiwe / Thandiwe#2026 (Kabwe GH)
+    Nurse Lombe   / Lombe#2026     (Solwezi GH)
+
+    Admin
+    -----
+    admin / Admin#2026  (MoH Headquarters)
 """
 
 from django.core.management.base import BaseCommand
@@ -17,20 +32,32 @@ from emr.models import Facility, User, Patient, Encounter
 
 
 FACILITIES = [
-    dict(name='UTH Lusaka',          province='Lusaka',      district='Lusaka District',      facility_type='hospital'),
-    dict(name='Chipata General',     province='Eastern',     district='Chipata District',      facility_type='hospital'),
-    dict(name='Ndola Central',       province='Copperbelt',  district='Ndola District',        facility_type='hospital'),
-    dict(name='Livingstone GH',      province='Southern',    district='Livingstone District',  facility_type='hospital'),
-    dict(name='Kabwe GH',            province='Central',     district='Kabwe District',        facility_type='hospital'),
-    dict(name='Solwezi GH',          province='North-Western', district='Solwezi District',    facility_type='hospital'),
-    dict(name='MoH Headquarters',    province='Lusaka',      district='Lusaka District',       facility_type='hq'),
+    dict(name='UTH Lusaka',           province='Lusaka',        district='Lusaka District',       facility_type='hospital'),
+    dict(name='Chipata General',      province='Eastern',       district='Chipata District',       facility_type='hospital'),
+    dict(name='Ndola Central',        province='Copperbelt',    district='Ndola District',         facility_type='hospital'),
+    dict(name='Livingstone GH',       province='Southern',      district='Livingstone District',   facility_type='hospital'),
+    dict(name='Kabwe GH',             province='Central',       district='Kabwe District',         facility_type='hospital'),
+    dict(name='Solwezi GH',           province='North-Western', district='Solwezi District',       facility_type='hospital'),
+    dict(name='Matero Level One',     province='Lusaka',        district='Lusaka District',        facility_type='health_centre'),
+    dict(name='Levy Mwanawasa GH',    province='Copperbelt',    district='Ndola District',         facility_type='hospital'),
+    dict(name='MoH Headquarters',     province='Lusaka',        district='Lusaka District',        facility_type='hq'),
 ]
 
 USERS = [
-    dict(name='Dr. Mulenga Banda',  username='doctor',  password='Doctor#2026',  role='doctor', facility='UTH Lusaka'),
-    dict(name='Nurse Chanda Phiri', username='nurse',   password='Nurse#2026',   role='nurse',  facility='Chipata General'),
-    dict(name='Admin User',         username='admin',   password='Admin#2026',   role='admin',  facility='MoH Headquarters'),
-    dict(name='Dr. Namwinga Lungu', username='doctor2', password='Doctor#2026',  role='doctor', facility='Ndola Central'),
+    # ── Doctors ──────────────────────────────────────────────────────────────
+    dict(name='Dr. Mulenga Banda',    username='Dr Mulenga',   password='Mulenga#2026',   role='doctor', facility='UTH Lusaka',        department='Internal Medicine'),
+    dict(name='Dr. Namwinga Lungu',   username='Dr Namwinga',  password='Namwinga#2026',  role='doctor', facility='Ndola Central',      department='Cardiology'),
+    dict(name='Dr. Peter Phiri',      username='Dr Peter',     password='Peter#2026',     role='doctor', facility='Matero Level One',   department='General Practice'),
+    dict(name='Dr. Edward Mbozi',     username='Dr Edward',    password='Edward#2026',    role='doctor', facility='Levy Mwanawasa GH',  department='Surgery'),
+    dict(name='Dr. Chilufya Mutaba',  username='Dr Chilufya',  password='Chilufya#2026',  role='doctor', facility='Livingstone GH',     department='Obstetrics & Gynaecology'),
+    # ── Nurses ───────────────────────────────────────────────────────────────
+    dict(name='Nurse Chanda Phiri',   username='Nurse Chanda',   password='Chanda#2026',   role='nurse', facility='Chipata General',   department='OPD / Triage'),
+    dict(name='Nurse Mutale Kabwe',   username='Nurse Mutale',   password='Mutale#2026',   role='nurse', facility='UTH Lusaka',         department='ART Clinic'),
+    dict(name='Nurse Bwalya Tembo',   username='Nurse Bwalya',   password='Bwalya#2026',   role='nurse', facility='Ndola Central',      department='Inpatient Ward'),
+    dict(name='Nurse Thandiwe Nkosi', username='Nurse Thandiwe', password='Thandiwe#2026', role='nurse', facility='Kabwe GH',           department='MCH / Antenatal'),
+    dict(name='Nurse Lombe Zulu',     username='Nurse Lombe',    password='Lombe#2026',    role='nurse', facility='Solwezi GH',          department='TB Clinic'),
+    # ── Admin ─────────────────────────────────────────────────────────────────
+    dict(name='Admin User',           username='admin',          password='Admin#2026',    role='admin', facility='MoH Headquarters',   department='Administration'),
 ]
 
 PATIENTS = [
@@ -109,6 +136,12 @@ ENCOUNTERS = [
          diagnosis='Rheumatoid arthritis', diagnosis_code='M06',
          treatment='Methotrexate 10mg weekly, Folic acid', medications='Monitor LFTs monthly',
          notes='Referred to physician', follow_up_date='2025-02-08', facility='Kabwe GH'),
+    dict(patient_smart_id='SC-2024-000006', encounter_type='OPD',
+         visit_date='2025-02-14', chief_complaint='Persistent cough > 2 weeks',
+         temperature=37.2, pulse=82, blood_pressure='118/76', weight=55.0, height=158.0, oxygen_sat=96.0,
+         diagnosis='Pulmonary TB (presumptive)', diagnosis_code='A15',
+         treatment='GeneXpert ordered, start RHZE if confirmed', medications='Cotrimoxazole prophylaxis',
+         notes='Sputum sent for GeneXpert', follow_up_date='2025-02-21', facility='Solwezi GH'),
 ]
 
 
@@ -144,6 +177,7 @@ class Command(BaseCommand):
             obj.role         = u['role']
             obj.facility     = u['facility']
             obj.facility_ref = facility_map.get(u['facility'])
+            obj.department   = u.get('department', '')
             # Always update the password so seed changes take effect on re-deploy
             obj.set_password(u['password'])
             obj.save()
@@ -152,7 +186,7 @@ class Command(BaseCommand):
                 f"  {'Created' if created else 'Updated'} user: {u['username']} (password set)"
             )
 
-        default_clinician = user_map.get('doctor')
+        default_clinician = user_map.get('Dr Mulenga')
 
         # ── Patients ──────────────────────────────────────────────────────
         patient_map: dict[str, Patient] = {}
@@ -188,4 +222,20 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(self.style.SUCCESS('\n✅  Seed complete.'))
-        self.stdout.write('   Login: doctor / Doctor#2026  |  nurse / Nurse#2026  |  admin / Admin#2026')
+        self.stdout.write('')
+        self.stdout.write('  Doctors:')
+        self.stdout.write('    Dr Mulenga   / Mulenga#2026    → UTH Lusaka')
+        self.stdout.write('    Dr Namwinga  / Namwinga#2026   → Ndola Central')
+        self.stdout.write('    Dr Peter     / Peter#2026      → Matero Level One')
+        self.stdout.write('    Dr Edward    / Edward#2026     → Levy Mwanawasa GH')
+        self.stdout.write('    Dr Chilufya  / Chilufya#2026   → Livingstone GH')
+        self.stdout.write('')
+        self.stdout.write('  Nurses:')
+        self.stdout.write('    Nurse Chanda   / Chanda#2026    → Chipata General')
+        self.stdout.write('    Nurse Mutale   / Mutale#2026    → UTH Lusaka')
+        self.stdout.write('    Nurse Bwalya   / Bwalya#2026    → Ndola Central')
+        self.stdout.write('    Nurse Thandiwe / Thandiwe#2026  → Kabwe GH')
+        self.stdout.write('    Nurse Lombe    / Lombe#2026     → Solwezi GH')
+        self.stdout.write('')
+        self.stdout.write('  Admin:')
+        self.stdout.write('    admin / Admin#2026  → MoH Headquarters')
